@@ -5,35 +5,37 @@ const globalForRedis = globalThis as unknown as {
   redis: Redis | undefined
 }
 
-// Create Redis client with connection pooling and error handling
-export const redis = globalForRedis.redis ?? new Redis(
-  process.env.REDIS_URL || 'redis://localhost:6379',
-  {
-    // Production-grade configuration
-    maxRetriesPerRequest: 3,
-    retryStrategy: (times) => {
-      const delay = Math.min(times * 50, 2000)
-      return delay
-    },
-    // Connection pooling
-    enableReadyCheck: true,
-    lazyConnect: true,
-  }
-)
+// Only create Redis client if REDIS_URL is set and not localhost
+const redisUrl = process.env.REDIS_URL
+const shouldUseRedis = redisUrl && !redisUrl.includes('localhost') && !redisUrl.includes('127.0.0.1')
+
+export const redis = shouldUseRedis ? (globalForRedis.redis ?? new Redis(redisUrl, {
+  // Production-grade configuration
+  maxRetriesPerRequest: 3,
+  retryStrategy: (times) => {
+    const delay = Math.min(times * 50, 2000)
+    return delay
+  },
+  // Connection pooling
+  enableReadyCheck: true,
+  lazyConnect: true,
+})) : null
 
 // Handle connection errors gracefully
-redis.on('error', (err) => {
-  console.error('Redis Client Error:', err)
-  // Don't crash the app if Redis is unavailable
-})
+if (redis) {
+  redis.on('error', (err) => {
+    console.error('Redis Client Error:', err)
+    // Don't crash the app if Redis is unavailable
+  })
 
-redis.on('connect', () => {
-  console.log('✅ Redis connected')
-})
+  redis.on('connect', () => {
+    console.log('✅ Redis connected')
+  })
 
-// Prevent multiple instances in development
-if (process.env.NODE_ENV !== 'production') {
-  globalForRedis.redis = redis
+  // Prevent multiple instances in development
+  if (process.env.NODE_ENV !== 'production') {
+    globalForRedis.redis = redis
+  }
 }
 
 // Cache utility functions (BEAST LEVEL: Production patterns)
@@ -44,6 +46,7 @@ export class CacheService {
    * Get cached value
    */
   static async get<T>(key: string): Promise<T | null> {
+    if (!redis) return null
     try {
       const value = await redis.get(key)
       return value ? JSON.parse(value) : null
@@ -57,6 +60,7 @@ export class CacheService {
    * Set cached value with TTL
    */
   static async set(key: string, value: any, ttlSeconds: number = this.DEFAULT_TTL): Promise<void> {
+    if (!redis) return
     try {
       await redis.setex(key, ttlSeconds, JSON.stringify(value))
     } catch (error) {
@@ -69,6 +73,7 @@ export class CacheService {
    * Delete cached value
    */
   static async del(key: string): Promise<void> {
+    if (!redis) return
     try {
       await redis.del(key)
     } catch (error) {
@@ -80,6 +85,7 @@ export class CacheService {
    * Delete all keys matching a pattern (for cache invalidation)
    */
   static async delPattern(pattern: string): Promise<void> {
+    if (!redis) return
     try {
       const stream = redis.scanStream({
         match: pattern,
@@ -105,6 +111,7 @@ export class CacheService {
    * Check if Redis is available
    */
   static async isAvailable(): Promise<boolean> {
+    if (!redis) return false
     try {
       await redis.ping()
       return true
