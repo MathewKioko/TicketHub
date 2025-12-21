@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ORGANIZER
+  ATTENDEE
+}
+
+enum TicketStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  CHECKED_IN
+}
+
+enum PaymentMethod {
+  STRIPE
+  MPESA
+}
+
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  name      String
+  password  String?  // Optional for OAuth users
+  googleId  String?  @unique // Google OAuth ID
+  role      UserRole @default(ATTENDEE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  organizedEvents Event[]  @relation("EventOrganizer")
+  tickets         Ticket[]
+
+  @@map("users")
+}
+
+model Event {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  venue       String
+  date        DateTime
+  endDate     DateTime?
+  imageUrl    String?
+  category    String
+  organizerId String    @db.ObjectId
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Pricing
+  basePrice Float  @default(0)
+  currency  String @default("USD")
+
+  // Relations
+  organizer User      @relation("EventOrganizer", fields: [organizerId], references: [id])
+  tickets   Ticket[]
+  checkIns  CheckIn[]
+
+  @@index([organizerId])
+  @@index([date])
+  @@index([category])
+  @@map("events")
+}
+
+model Ticket {
+  id       String       @id @default(auto()) @map("_id") @db.ObjectId
+  eventId  String       @db.ObjectId
+  userId   String       @db.ObjectId
+  status   TicketStatus @default(PENDING)
+  paymentMethod PaymentMethod @default(STRIPE)
+  price    Float
+  quantity Int          @default(1)
+
+  // Stripe
+  stripePaymentId String? @unique
+  stripeSessionId String? @unique
+
+  // M-Pesa
+  mpesaCheckoutRequestId String?
+  mpesaMerchantRequestId String?
+  mpesaReceiptNumber     String?
+  mpesaPhoneNumber       String?
+
+  // QR Code
+  qrCodeData  String  @unique
+  qrCodeImage String? // Base64 or URL
+
+  // Check-in
+  checkedInAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  event   Event    @relation(fields: [eventId], references: [id])
+  user    User     @relation(fields: [userId], references: [id])
+  checkIn CheckIn?
+
+  @@index([eventId])
+  @@index([userId])
+  @@index([status])
+  @@map("tickets")
+}
+
+model CheckIn {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  ticketId    String   @unique @db.ObjectId
+  eventId     String   @db.ObjectId
+  checkedInAt DateTime @default(now())
+  scannerId   String?  @db.ObjectId // Who scanned the ticket
+
+  // Relations
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+  event  Event  @relation(fields: [eventId], references: [id])
+
+  @@index([eventId])
+  @@index([checkedInAt])
+  @@map("checkins")
+}
