@@ -1,6 +1,6 @@
 # Ticket Hub — The Future of Event Management
 
-Ticket Hub is a modern platform that lets users discover, book, and attend events with ease.
+Ticket Hub is a modern platform that lets users discover, book, and attend events with ease
 
 ## Features
 
