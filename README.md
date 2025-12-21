@@ -5,7 +5,7 @@ Ticket Hub is a modern platform that lets users discover, book, and attend event
 ## Features
 
 ### For Attendees
-- 🔍 Discover events by category, date, and location.
+- 🔍 Discover events by category, date, and location
 - 💳 Secure ticket purchases via Stripe
 - 📱 QR-code e-tickets
 - ✅ Instant check-in using mobile scanner
