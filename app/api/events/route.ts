@@ -73,19 +73,27 @@ export async function GET(request: NextRequest) {
       if (maxPrice) where.basePrice.lte = parseFloat(maxPrice)
     }
     
-    // Text search (title, description, venue) - MongoDB regex for case-insensitive
-    if (query) {
-      const queryRegex = { $regex: query, $options: 'i' } as any
-      where.OR = [
+    // Text search (title, description, venue) and location search - MongoDB regex for case-insensitive
+    const queryRegex = query ? { $regex: query, $options: 'i' } as any : null
+    const locationRegex = location ? { $regex: location, $options: 'i' } as any : null
+
+    // Build OR conditions for text search and location
+    const orConditions: any[] = []
+
+    if (queryRegex) {
+      orConditions.push(
         { title: queryRegex },
         { description: queryRegex },
-        { venue: queryRegex },
-      ]
+        { venue: queryRegex }
+      )
     }
-    
-    // Location search (venue matching) - case-insensitive
-    if (location) {
-      where.venue = { $regex: location, $options: 'i' } as any
+
+    if (locationRegex) {
+      orConditions.push({ venue: locationRegex })
+    }
+
+    if (orConditions.length > 0) {
+      where.OR = orConditions
     }
     
     // Handle organizerId filter

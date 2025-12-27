@@ -7,12 +7,9 @@ export async function GET(
   { params }: { params: { sessionId: string } }
 ) {
   try {
-    const user = await requireAuth()
-
     const tickets = await prisma.ticket.findMany({
       where: {
         stripeSessionId: params.sessionId,
-        userId: user.id,
       },
       select: {
         id: true,
