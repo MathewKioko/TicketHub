@@ -14,7 +14,7 @@ Ticket Hub is a modern platform that lets users discover, book, and attend event
 - 🎫 Create and manage events
 - 🎨 Design custom 3D seat maps
 - 💰 Manage ticket sales and pricing
-- 📊 Real-time attendance tracking
+- 📊 Real-time attendance tracking,
 
 ## Tech Stack
 
