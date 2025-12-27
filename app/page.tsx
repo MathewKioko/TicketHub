@@ -27,6 +27,18 @@ export default function HomePage() {
             Browse Events
           </Link>
           <Link
+            href="/auth/login"
+            className="px-5 py-2.5 text-white/90 hover:text-white font-medium rounded-xl hover:bg-white/10 backdrop-blur-sm transition-all duration-300"
+          >
+            Login
+          </Link>
+          <Link
+            href="/auth/signup"
+            className="px-5 py-2.5 text-white/90 hover:text-white font-medium rounded-xl hover:bg-white/10 backdrop-blur-sm transition-all duration-300"
+          >
+            Sign Up
+          </Link>
+          <Link
             href="/events/create"
             className="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-semibold shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/40 hover:from-primary-600 hover:to-primary-700 transition-all duration-300 hover:scale-105 active:scale-95"
           >

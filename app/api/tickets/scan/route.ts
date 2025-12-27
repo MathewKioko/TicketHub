@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser, logAuditAction } from '@/lib/auth'
+import { headers } from 'next/headers'
 
 export async function POST(request: NextRequest) {
   try {
@@ -130,6 +131,12 @@ export async function POST(request: NextRequest) {
         checkedInAt: new Date(),
       },
     })
+
+    // Log ticket scan
+    const headersList = await headers()
+    const ipAddress = headersList.get('x-forwarded-for') || headersList.get('x-real-ip') || 'unknown'
+    const userAgent = headersList.get('user-agent') || 'unknown'
+    await logAuditAction('TICKET_SCAN', 'TICKET', ticket.userId, `Ticket scanned by organizer ${user.name} (${user.id}) for event ${ticket.event.title}`, ipAddress, userAgent)
 
     return NextResponse.json({
       success: true,

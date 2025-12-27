@@ -65,6 +65,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check if user is verified (identity confirmation)
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { verified: true },
+    })
+    if (!user?.verified) {
+      return NextResponse.json(
+        { error: 'User must be verified to purchase tickets' },
+        { status: 403 }
+      )
+    }
+
     const session = await createCheckoutSession(
       ticketIds,
       eventId,

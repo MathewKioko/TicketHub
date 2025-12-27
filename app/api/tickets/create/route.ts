@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { generateTicketId, generateQRCode } from '@/lib/qrcode'
+import { getCurrentUser } from '@/lib/auth'
 import { z } from 'zod'
 
 const createTicketSchema = z.object({
@@ -14,28 +15,38 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { eventId, quantity, guestName, guestEmail } = createTicketSchema.parse(body)
-    
-    // Get or create guest user with valid MongoDB ObjectID
-    // Use a single guest account for all anonymous bookings
-    const GUEST_EMAIL = 'guest@Ticket Hub.local'
-    const GUEST_NAME = 'Guest User'
-    
-    let guestUser = await prisma.user.findUnique({
-      where: { email: GUEST_EMAIL },
-    })
-    
-    if (!guestUser) {
-      // Create guest user if doesn't exist
-      guestUser = await prisma.user.create({
-        data: {
-          email: GUEST_EMAIL,
-          name: GUEST_NAME,
-          role: 'ATTENDEE',
-        },
+
+    // Check if user is authenticated
+    const currentUser = await getCurrentUser()
+    let userId: string
+
+    if (currentUser) {
+      // Use authenticated user
+      userId = currentUser.id
+    } else {
+      // Get or create guest user with valid MongoDB ObjectID
+      // Use a single guest account for all anonymous bookings
+      const GUEST_EMAIL = 'guest@Ticket Hub.local'
+      const GUEST_NAME = 'Guest User'
+
+      let guestUser = await prisma.user.findUnique({
+        where: { email: GUEST_EMAIL },
       })
+
+      if (!guestUser) {
+        // Create guest user if doesn't exist
+        guestUser = await prisma.user.create({
+          data: {
+            email: GUEST_EMAIL,
+            name: GUEST_NAME,
+            role: 'ATTENDEE',
+            verified: true,
+          },
+        })
+      }
+
+      userId = guestUser.id
     }
-    
-    const userId = guestUser.id
 
     // Fetch event
     const event = await prisma.event.findUnique({

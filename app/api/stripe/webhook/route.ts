@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { headers } from 'next/headers'
+import { logAuditAction } from '@/lib/auth'
 
 // Force dynamic rendering - this route should never be statically generated
 export const dynamic = 'force-dynamic'
@@ -62,11 +63,16 @@ export async function POST(request: NextRequest) {
     // Emit real-time ticket count update (BEAST LEVEL: Real-time updates)
     if (updatedTickets.count > 0) {
       try {
-        // Get eventId from first updated ticket
+        // Get eventId and userId from first updated ticket
         const firstTicket = await prisma.ticket.findFirst({
           where: { stripeSessionId: session.id },
-          select: { eventId: true },
+          select: { eventId: true, userId: true },
         })
+
+        // Log purchase
+        if (firstTicket?.userId) {
+          await logAuditAction('PURCHASE', 'TICKET', firstTicket.userId, `Purchase completed for ${updatedTickets.count} ticket(s), session: ${session.id}`)
+        }
 
         if (firstTicket) {
           const { getSocketIO } = await import('@/lib/socket')

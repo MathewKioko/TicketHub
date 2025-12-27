@@ -13,6 +13,8 @@ datasource db {
 enum UserRole {
   ORGANIZER
   ATTENDEE
+  ADMIN
+  SCANNER
 }
 
 enum TicketStatus {
@@ -31,16 +33,30 @@ enum PaymentMethod {
 model User {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   email     String   @unique
+  phone     String?
   name      String
   password  String?  // Optional for OAuth users
-  googleId  String?  @unique // Google OAuth ID
+  googleId  String? // Google OAuth ID
   role      UserRole @default(ATTENDEE)
+
+  // Authentication fields
+  verified          Boolean   @default(false)
+  verificationToken String?
+  verificationExpires DateTime?
+  otp               String?
+  otpExpires        DateTime?
+  lastLogin         DateTime?
+  loginAttempts     Int       @default(0)
+  lockUntil         DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  organizedEvents Event[]  @relation("EventOrganizer")
+  organizedEvents Event[]    @relation("EventOrganizer")
   tickets         Ticket[]
+  sessions        Session[]
+  auditLogs       AuditLog[]
 
   @@map("users")
 }
@@ -66,6 +82,7 @@ model Event {
   organizer User      @relation("EventOrganizer", fields: [organizerId], references: [id])
   tickets   Ticket[]
   checkIns  CheckIn[]
+  scanners  Scanner[]
 
   @@index([organizerId])
   @@index([date])
@@ -83,8 +100,8 @@ model Ticket {
   quantity Int          @default(1)
 
   // Stripe
-  stripePaymentId String? @unique
-  stripeSessionId String? @unique
+  stripePaymentId String?
+  stripeSessionId String?
 
   // M-Pesa
   mpesaCheckoutRequestId String?
@@ -121,10 +138,67 @@ model CheckIn {
   scannerId   String?  @db.ObjectId // Who scanned the ticket
 
   // Relations
-  ticket Ticket @relation(fields: [ticketId], references: [id])
-  event  Event  @relation(fields: [eventId], references: [id])
+  ticket  Ticket  @relation(fields: [ticketId], references: [id])
+  event   Event   @relation(fields: [eventId], references: [id])
+  scanner Scanner? @relation(fields: [scannerId], references: [id])
 
   @@index([eventId])
   @@index([checkedInAt])
+  @@index([scannerId])
   @@map("checkins")
+}
+
+model Session {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model Scanner {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  deviceId    String   @unique
+  secret      String
+  eventId     String?  @db.ObjectId
+  isActive    Boolean  @default(true)
+  lastUsed    DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  event    Event?    @relation(fields: [eventId], references: [id])
+  checkIns CheckIn[]
+
+  @@index([eventId])
+  @@map("scanners")
+}
+
+model AuditLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?  @db.ObjectId
+  action    String
+  resource  String
+  details   String?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
 }
