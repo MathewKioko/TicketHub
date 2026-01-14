@@ -14,7 +14,25 @@ Architecture
 - Payment Integration (mock / real)
 - Auth & Access Control
 
-[Insert architecture diagram]
+src/
+ ├─ modules/
+ │   ├─ events/
+ │   ├─ tickets/
+ │   ├─ orders/
+ │   └─ payments/
+ ├─ infrastructure/
+ │   ├─ db/
+ │   ├─ cache/
+ │   └─ messaging/
+ ├─ shared/
+ │   ├─ errors/
+ │   ├─ utils/
+ │   └─ types/
+ ├─ api/
+ │   ├─ routes/
+ │   └─ controllers/
+ └─ index.ts
+
 
  Core Concepts
 - Events & Ticket Types
