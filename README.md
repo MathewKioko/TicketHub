@@ -1,22 +1,63 @@
-# Ticket Hub — The Future of Event Management
+TicketHub
 
-Ticket Hub is a modern platform that lets users discover, book, and attend events with ease
+Problem
+Event organizers need a reliable way to sell and validate tickets online
+while preventing overselling, duplicate purchases, and ticket fraud.
 
-## Features
+Solution
+TicketHub is a backend-first ticketing system that manages event creation,
+ticket inventory, purchases, and validation with consistency guarantees.
 
-### For Attendees
-- 🔍 Discover events by category, date, and location
-- 💳 Secure ticket purchases via Stripe
-- 📱 QR-code e-tickets
-- ✅ Instant check-in using mobile scanner
+Architecture
+- API Service (Node.js + TypeScript)
+- Database (PostgreSQL / MySQL)
+- Payment Integration (mock / real)
+- Auth & Access Control
 
-### For Organizers
-- 🎫 Create and manage events
-- 🎨 Design custom 3D seat maps
-- 💰 Manage ticket sales and pricing
-- 📊 Real-time attendance tracking,
+[Insert architecture diagram]
 
-## Tech Stack
+ Core Concepts
+- Events & Ticket Types
+- Inventory locking
+- Orders & Payments
+- Ticket issuance & validation
+
+ Key Design Decisions
+ Inventory Management
+- How overselling is prevented
+- How concurrent purchases are handled
+
+ Payments
+- How payment confirmation is handled
+- How failed or duplicate payments are handled
+
+ Idempotency
+- How duplicate requests are detected
+
+ Security
+- Auth strategy
+- Ticket validation approach (QR / hash / UUID)
+
+ API Overview
+- POST /events
+- POST /tickets/purchase
+- POST /tickets/validate
+
+ Setup
+1. Clone repo
+2. Create `.env`
+3. Run migrations
+4. Start server
+
+ Limitations
+- No seat-level selection
+- No refunds yet
+
+ Future Improvements
+- Webhooks
+- Distributed locking
+- Event analytics
+
 
 - **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript
