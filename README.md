@@ -1,81 +1,235 @@
 TicketHub
 
-Problem
-Event organizers need a reliable way to sell and validate tickets online
-while preventing overselling, duplicate purchases, and ticket fraud.
+ Problem
+
+Event organizers need a reliable way to sell and validate tickets online while preventing:
+
+* Ticket overselling due to concurrent purchases
+* Duplicate or replayed payment requests
+* Ticket fraud and unauthorized reuse
+* Inconsistent states when failures occur (e.g. payment succeeds but ticket issuance fails)
+
+Most simple ticketing systems break under concurrency, retries, or partial failures.
+
 
 Solution
-TicketHub is a backend-first ticketing system that manages event creation,
-ticket inventory, purchases, and validation with consistency guarantees.
 
-Architecture
-- API Service (Node.js + TypeScript)
-- Database (PostgreSQL / MySQL)
-- Payment Integration (mock / real)
-- Auth & Access Control
+**TicketHub** is a backend-first ticketing system designed with **consistency, correctness, and real-world failure scenarios** in mind.
 
-src/
- ├─ modules/
- │   ├─ events/
- │   ├─ tickets/
- │   ├─ orders/
- │   └─ payments/
- ├─ infrastructure/
- │   ├─ db/
- │   ├─ cache/
- │   └─ messaging/
- ├─ shared/
- │   ├─ errors/
- │   ├─ utils/
- │   └─ types/
- ├─ api/
- │   ├─ routes/
- │   └─ controllers/
- └─ index.ts
+It provides APIs for:
+
+* Event and ticket type management
+* Controlled ticket inventory
+* Purchase processing with idempotency
+* Ticket issuance and validation
+
+The system prioritizes **data integrity and predictable behavior over UI complexity**.
+
+---
+
+## High-Level Architecture
+
+```
+Client
+  |
+  v
+API Layer (REST)
+  |
+  v
+Domain Modules
+  ├─ Events
+  ├─ Tickets (Inventory)
+  ├─ Orders
+  └─ Payments
+  |
+  v
+Database (Transactional)
+```
+
+Core Components
+
+* **API Layer** – Handles request validation, authentication, and routing
+* **Domain Modules** – Encapsulate business logic per domain
+* **Database** – Source of truth for inventory and orders
+* **Payment Layer** – Handles payment confirmation (mocked or real)
 
 
- Core Concepts
-- Events & Ticket Types
-- Inventory locking
-- Orders & Payments
-- Ticket issuance & validation
+Core Concepts
 
- Key Design Decisions
- Inventory Management
-- How overselling is prevented
-- How concurrent purchases are handled
+Events & Ticket Types
 
- Payments
-- How payment confirmation is handled
-- How failed or duplicate payments are handled
+* An event can have multiple ticket types
+* Each ticket type has a fixed inventory count
 
- Idempotency
-- How duplicate requests are detected
+Inventory Control
 
- Security
-- Auth strategy
-- Ticket validation approach (QR / hash / UUID)
+* Inventory is **transactionally updated**
+* Overselling is prevented even under concurrent requests
 
- API Overview
-- POST /events
-- POST /tickets/purchase
-- POST /tickets/validate
+Orders & Payments
 
- Setup
-1. Clone repo
-2. Create `.env`
-3. Run migrations
-4. Start server
+* Ticket purchases create orders
+* Orders transition through explicit states:
+
+  * `PENDING`
+  * `PAID`
+  * `FAILED`
+  * `CANCELLED`
+
+Ticket Issuance
+
+* Tickets are issued **only after confirmed payment**
+* Each ticket has a unique identifier used for validation
+
+
+
+Key Design Decisions
+
+Inventory Management (Overselling Prevention)
+
+To prevent overselling:
+
+* Ticket availability is checked and updated **inside a database transaction**
+* Row-level locking or optimistic locking is used during purchase
+* Inventory is decremented **only once per successful purchase**
+
+This ensures correctness even when multiple users attempt to buy the last ticket simultaneously.
+
+
+ Idempotent Purchase Requests
+
+Real systems must handle retries.
+
+TicketHub supports **idempotent purchases**:
+
+* Each purchase request includes an `idempotency_key`
+* If the same request is received again, the existing result is returned
+* Duplicate orders and double charges are prevented
+
+This is critical for:
+
+* Network retries
+* Client-side resubmissions
+* Payment provider callbacks
+
+ Payment Handling & Failure Safety
+
+Payment is treated as an **external, unreliable system**.
+
+Scenarios handled:
+
+* Payment succeeds but ticket issuance fails
+* Payment callback arrives multiple times
+* API crashes mid-flow
+
+Approach:
+
+* Payment confirmation is verified before issuing tickets
+* State transitions are explicit and auditable
+* Inconsistent states can be retried or reconciled safely
+
+ Ticket Validation & Security
+
+* Each ticket has a unique identifier (UUID / hash)
+* Validation checks:
+
+  * Ticket existence
+  * Event association
+  * Usage status
+* Used tickets are marked and cannot be reused
+
+This prevents:
+
+* Ticket duplication
+* Replay attacks
+* Unauthorized access
+
+---
+
+## API Overview (Simplified)
+
+### Create Event
+
+```
+POST /events
+```
+
+### Purchase Ticket
+
+```
+POST /tickets/purchase
+Headers:
+  Idempotency-Key: <uuid>
+```
+
+### Validate Ticket
+
+```
+POST /tickets/validate
+```
+
+---
+
+## Tech Stack
+
+* **Language:** TypeScript
+* **Runtime:** Node.js
+* **API:** REST
+* **Database:** SQL (PostgreSQL / MySQL)
+* **ORM / Query Layer:** (Specify if used)
+* **Testing:** Jest (or equivalent)
+
+---
+
+## Setup
+
+```bash
+git clone https://github.com/MathewKioko/TicketHub.git
+cd TicketHub
+
+cp .env.example .env
+npm install
+npm run migrate
+npm run dev
+```
+
+---
+
+Failure Scenarios & Behavior
+
+| Scenario                           | Behavior                                 |
+| ---------------------------------- | ---------------------------------------- |
+| Duplicate purchase request         | Existing order returned                  |
+| Concurrent purchase of last ticket | Only one succeeds                        |
+| Payment success, issuance failure  | Order remains consistent, retry possible |
+| API crash mid-request              | Transaction rollback                     |
 
  Limitations
-- No seat-level selection
-- No refunds yet
 
- Future Improvements
-- Webhooks
-- Distributed locking
-- Event analytics
+* No seat-level allocation
+* No refunds or cancellations
+* Single-instance deployment (no distributed locks yet)
 
+Future Improvements
+
+* Distributed locking for horizontal scaling
+* Payment webhooks with signature verification
+* Refund and cancellation flows
+* Event analytics and reporting
+* QR-based ticket scanning service
+
+Why This Project Exists
+
+TicketHub is intentionally backend-focused.
+
+It exists to demonstrate:
+
+* System design thinking
+* Data consistency handling
+* Real-world failure awareness
+* Maintainable backend architecture
+
+UI simplicity is a conscious tradeoff.
 
 - **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript
