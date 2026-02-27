@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       where: { status: 'CONFIRMED' },
       select: { price: true },
     })
-    const totalRevenue = ticketsWithPrice.reduce((sum, t) => sum + (t.price || 0), 0)
+    const totalRevenue = ticketsWithPrice.reduce((sum, t) => sum + (Number(t.price) || 0), 0)
 
     // Get platform fees - estimate as 10% of revenue
     const totalPlatformFees = totalRevenue * 0.1
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
           where: { eventId: e.id, status: 'CONFIRMED' },
           select: { price: true },
         })
-        const revenue = tickets.reduce((sum: number, t) => sum + (t.price || 0), 0)
+        const revenue = tickets.reduce((sum: number, t) => sum + (Number(t.price) || 0), 0)
         return {
           eventId: e.id,
           title: e.title,
