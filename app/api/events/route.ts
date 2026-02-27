@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { CacheService } from '@/lib/redis'
+import { getCurrentUser } from '@/lib/auth'
 import { z } from 'zod'
 
 const createEventSchema = z.object({
@@ -97,8 +98,16 @@ export async function GET(request: NextRequest) {
     }
     
     // Handle organizerId filter
-    if (organizerIdParam && organizerIdParam !== 'me') {
-      where.organizerId = organizerIdParam
+    if (organizerIdParam) {
+      if (organizerIdParam === 'me') {
+        // Get current user's events
+        const currentUser = await getCurrentUser()
+        if (currentUser) {
+          where.organizerId = currentUser.id
+        }
+      } else {
+        where.organizerId = organizerIdParam
+      }
     }
 
     const events = await prisma.event.findMany({
@@ -160,29 +169,17 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const data = createEventSchema.parse(body)
-
-    // Get or create guest organizer user with valid MongoDB ObjectID
-    const GUEST_ORGANIZER_EMAIL = 'organizer@Ticket Hub.local'
-    const GUEST_ORGANIZER_NAME = 'Guest Organizer'
+    // Get current user - any authenticated user can create events
+    const currentUser = await getCurrentUser()
     
-    let organizerUser = await prisma.user.findUnique({
-      where: { email: GUEST_ORGANIZER_EMAIL },
-    })
-    
-    if (!organizerUser) {
-      // Create guest organizer user if doesn't exist
-      organizerUser = await prisma.user.create({
-        data: {
-          email: GUEST_ORGANIZER_EMAIL,
-          name: GUEST_ORGANIZER_NAME,
-          role: 'ORGANIZER',
-        },
-      })
+    if (!currentUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
-    const organizerId = organizerUser.id
+    const body = await request.json()
+    const data = createEventSchema.parse(body)
+    
+    const organizerId = currentUser.id
 
     const event = await prisma.event.create({
       data: {
@@ -209,7 +206,15 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ event }, { status: 201 })
-  } catch (error) {
+  } catch (error: any) {
+    // Handle authentication/authorization errors
+    if (error.message === 'Unauthorized' || error.message?.includes('Forbidden')) {
+      return NextResponse.json(
+        { error: error.message || 'You must be logged in to create an event.' },
+        { status: error.message.includes('Forbidden') ? 403 : 401 }
+      )
+    }
+    
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Invalid input', details: error.errors },

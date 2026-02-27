@@ -46,9 +46,25 @@ export default function OrganizerDashboard() {
     upcomingEvents: 0,
   })
   const [loading, setLoading] = useState(true)
+  const [authenticated, setAuthenticated] = useState(false)
+  const [userName, setUserName] = useState('')
 
   const fetchDashboardData = useCallback(async () => {
+    // Check authentication first
+    const userId = localStorage.getItem('TicketHub_userId')
+    if (!userId) {
+      router.push('/auth/login')
+      return
+    }
+
     try {
+      // Fetch user info
+      const userRes = await fetch('/api/auth/me')
+      if (userRes.ok) {
+        const userData = await userRes.json()
+        setUserName(userData.user?.name || '')
+      }
+
       const [eventsRes, statsRes] = await Promise.all([
         fetch('/api/events?organizerId=me', {
           next: { revalidate: 60 } // Cache for 60 seconds
@@ -57,6 +73,12 @@ export default function OrganizerDashboard() {
           next: { revalidate: 60 } // Cache for 60 seconds
         }),
       ])
+
+      // Check if unauthorized
+      if (eventsRes.status === 401 || eventsRes.status === 403) {
+        router.push('/auth/login')
+        return
+      }
 
       if (eventsRes.ok) {
         const eventsData = await eventsRes.json()
@@ -67,13 +89,15 @@ export default function OrganizerDashboard() {
         const statsData = await statsRes.json()
         setStats(statsData)
       }
+
+      setAuthenticated(true)
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
       toast.error('Failed to load dashboard')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [router])
 
   useEffect(() => {
     fetchDashboardData()
@@ -93,6 +117,9 @@ export default function OrganizerDashboard() {
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-between items-center">
             <div className="animate-fade-in-up">
+              {userName && (
+                <p className="text-lg text-kenyan-green font-medium mb-1">Welcome back, {userName}!</p>
+              )}
               <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-2">
                 Organizer <span className="gradient-text">Dashboard</span>
               </h1>

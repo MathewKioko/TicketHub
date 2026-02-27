@@ -46,7 +46,7 @@ export default function AdminUsersPage() {
 
   const updateUserRole = async (userId: string, newRole: string) => {
     try {
-      const response = await fetch(`/api/admin/users/${userId}/role`, {
+      const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: newRole }),

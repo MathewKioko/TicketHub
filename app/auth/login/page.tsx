@@ -27,12 +27,17 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (response.ok) {
+        // Store user ID in localStorage for ticket dashboard
+        if (data.user?.id) {
+          localStorage.setItem('TicketHub_userId', data.user.id)
+        }
+        
         // Redirect based on user role
         const role = data.user?.role
         if (role === 'ADMIN') {
           router.push('/dashboard/admin')
         } else if (role === 'ORGANIZER' || role === 'EVENT_OWNER') {
-          router.push('/dashboard/owner')
+          router.push('/dashboard/organizer')
         } else {
           router.push('/dashboard/attendee')
         }
@@ -149,6 +154,19 @@ export default function LoginPage() {
               Create Event
             </Link>
           </div>
+        </div>
+
+        {/* Organizer CTA */}
+        <div className="mt-6 p-4 glass rounded-xl border border-kenyan-gold/20">
+          <p className="text-sm text-kenyan-cream/80 text-center mb-3">
+            Want to host your own events?
+          </p>
+          <Link 
+            href="/become-organizer" 
+            className="block text-center text-kenyan-gold font-semibold hover:text-kenyan-cream transition-colors text-sm"
+          >
+            Apply to become an Organizer →
+          </Link>
         </div>
       </div>
     </div>

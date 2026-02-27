@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -33,14 +34,33 @@ interface Ticket {
 }
 
 export default function AttendeeDashboard() {
+  const router = useRouter()
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [userName, setUserName] = useState('')
 
   useEffect(() => {
+    // Check authentication first
+    const userId = localStorage.getItem('TicketHub_userId')
+    if (!userId) {
+      router.push('/auth/login')
+      return
+    }
+    
+    // Fetch user info
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.user?.name) {
+          setUserName(data.user.name)
+        }
+      })
+      .catch(console.error)
+    
     fetchTickets()
     verifyPendingPayments()
-  }, [])
+  }, [router])
 
   const verifyPendingPayments = async () => {
     try {
@@ -59,9 +79,18 @@ export default function AttendeeDashboard() {
   const fetchTickets = async () => {
     try {
       const userId = localStorage.getItem('TicketHub_userId')
-      const url = userId ? `/api/tickets/my?userId=${userId}` : '/api/tickets/my'
+      if (!userId) {
+        router.push('/auth/login')
+        return
+      }
+      
+      const url = `/api/tickets/my?userId=${userId}`
       
       const res = await fetch(url)
+      if (res.status === 401 || res.status === 403) {
+        router.push('/auth/login')
+        return
+      }
       const data = await res.json()
       if (res.ok) {
         setTickets(data.tickets || [])
@@ -167,6 +196,9 @@ export default function AttendeeDashboard() {
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="animate-fade-in-up">
+              {userName && (
+                <p className="text-lg text-kenyan-gold font-medium mb-1">Welcome back, {userName}!</p>
+              )}
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-kenyan-green to-kenyan-accent flex items-center justify-center">
                   <Sparkles className="w-6 h-6 text-white" />

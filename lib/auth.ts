@@ -101,11 +101,18 @@ export async function getCurrentUser() {
   return user
 }
 
-export async function requireAuth() {
+export async function requireAuth(allowedRoles?: string[]) {
   const user = await getCurrentUser()
   if (!user) {
     throw new Error('Unauthorized')
   }
+  
+  if (allowedRoles && allowedRoles.length > 0) {
+    if (!allowedRoles.includes(user.role)) {
+      throw new Error('Forbidden: You need an organizer account to create events. Apply for an organizer account to get started.')
+    }
+  }
+  
   return user
 }
 

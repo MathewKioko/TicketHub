@@ -1,319 +1,192 @@
-TicketHub
+# TicketHub - Kenya's Premier Event Ticketing Platform
 
- Problem
+A production-grade, enterprise-ready event ticketing platform built with Next.js, MongoDB, and Paystack. Designed specifically for the Kenyan market with modern UI/UX.
 
-Event organizers need a reliable way to sell and validate tickets online while preventing:
+![TicketHub](TicketHubV2.png)
 
-* Ticket overselling due to concurrent purchases
-* Duplicate or replayed payment requests
-* Ticket fraud and unauthorized reuse
-* Inconsistent states when failures occur (e.g. payment succeeds but ticket issuance fails)
+## 🚀 Features
 
-Most simple ticketing systems break under concurrency, retries, or partial failures.
+### Core Features
+- **Event Management** - Create, manage, and track events with rich metadata
+- **Ticket Booking** - Secure ticket purchases with Paystack integration
+- **QR Code Tickets** - Instant QR code generation for venue entry
+- **Real-time Updates** - Live ticket count and availability via WebSocket
+- **Role-based Access** - Admin, Organizer, and Attendee dashboards
+- **Multi-ticket Events** - Support for different ticket tiers (VIP, Regular, etc.)
 
+### Payment Integration
+- **Paystack** - Primary payment gateway (KES currency)
+- **Secure Webhooks** - Idempotent payment verification
+- **Instant Confirmation** - Real-time payment verification
 
-Solution
+### Dashboard Features
+- **Admin Dashboard** - User management, payouts, platform analytics
+- **Organizer Dashboard** - Event management, sales tracking, payout settings
+- **Attendee Dashboard** - Ticket management, QR codes, calendar export
 
-**TicketHub** is a backend-first ticketing system designed with **consistency, correctness, and real-world failure scenarios** in mind.
+## 🛠️ Tech Stack
 
-It provides APIs for:
-
-* Event and ticket type management
-* Controlled ticket inventory
-* Purchase processing with idempotency
-* Ticket issuance and validation
-
-The system prioritizes **data integrity and predictable behavior over UI complexity**.
-
----
-
-## High-Level Architecture
-
-```
-Client
-  |
-  v
-API Layer (REST)
-  |
-  v
-Domain Modules
-  ├─ Events
-  ├─ Tickets (Inventory)
-  ├─ Orders
-  └─ Payments
-  |
-  v
-Database (Transactional)
-```
-
-Core Components
-
-* **API Layer** – Handles request validation, authentication, and routing
-* **Domain Modules** – Encapsulate business logic per domain
-* **Database** – Source of truth for inventory and orders
-* **Payment Layer** – Handles payment confirmation (mocked or real)
-
-
-Core Concepts
-
-Events & Ticket Types
-
-* An event can have multiple ticket types
-* Each ticket type has a fixed inventory count
-
-Inventory Control
-
-* Inventory is **transactionally updated**
-* Overselling is prevented even under concurrent requests
-
-Orders & Payments
-
-* Ticket purchases create orders
-* Orders transition through explicit states:
-
-  * `PENDING`
-  * `PAID`
-  * `FAILED`
-  * `CANCELLED`
-
-Ticket Issuance
-
-* Tickets are issued **only after confirmed payment**
-* Each ticket has a unique identifier used for validation
-
-
-
-Key Design Decisions
-
-Inventory Management (Overselling Prevention)
-
-To prevent overselling:
-
-* Ticket availability is checked and updated **inside a database transaction**
-* Row-level locking or optimistic locking is used during purchase
-* Inventory is decremented **only once per successful purchase**
-
-This ensures correctness even when multiple users attempt to buy the last ticket simultaneously.
-
-
- Idempotent Purchase Requests
-
-Real systems must handle retries.
-
-TicketHub supports **idempotent purchases**:
-
-* Each purchase request includes an `idempotency_key`
-* If the same request is received again, the existing result is returned
-* Duplicate orders and double charges are prevented
-
-This is critical for:
-
-* Network retries
-* Client-side resubmissions
-* Payment provider callbacks
-
- Payment Handling & Failure Safety
-
-Payment is treated as an **external, unreliable system**.
-
-Scenarios handled:
-
-* Payment succeeds but ticket issuance fails
-* Payment callback arrives multiple times
-* API crashes mid-flow
-
-Approach:
-
-* Payment confirmation is verified before issuing tickets
-* State transitions are explicit and auditable
-* Inconsistent states can be retried or reconciled safely
-
- Ticket Validation & Security
-
-* Each ticket has a unique identifier (UUID / hash)
-* Validation checks:
-
-  * Ticket existence
-  * Event association
-  * Usage status
-* Used tickets are marked and cannot be reused
-
-This prevents:
-
-* Ticket duplication
-* Replay attacks
-* Unauthorized access
-
----
-
-## API Overview (Simplified)
-
-### Create Event
-
-```
-POST /events
-```
-
-### Purchase Ticket
-
-```
-POST /tickets/purchase
-Headers:
-  Idempotency-Key: <uuid>
-```
-
-### Validate Ticket
-
-```
-POST /tickets/validate
-```
-
----
-
-## Tech Stack
-
-* **Language:** TypeScript
-* **Runtime:** Node.js
-* **API:** REST
-* **Database:** SQL (PostgreSQL / MySQL)
-* **ORM / Query Layer:** (Specify if used)
-* **Testing:** Jest (or equivalent)
-
----
-
-## Setup
-
-```bash
-git clone https://github.com/MathewKioko/TicketHub.git
-cd TicketHub
-
-cp .env.example .env
-npm install
-npm run migrate
-npm run dev
-```
-
----
-
-Failure Scenarios & Behavior
-
-| Scenario                           | Behavior                                 |
-| ---------------------------------- | ---------------------------------------- |
-| Duplicate purchase request         | Existing order returned                  |
-| Concurrent purchase of last ticket | Only one succeeds                        |
-| Payment success, issuance failure  | Order remains consistent, retry possible |
-| API crash mid-request              | Transaction rollback                     |
-
- Limitations
-
-* No seat-level allocation
-* No refunds or cancellations
-* Single-instance deployment (no distributed locks yet)
-
-Future Improvements
-
-* Distributed locking for horizontal scaling
-* Payment webhooks with signature verification
-* Refund and cancellation flows
-* Event analytics and reporting
-* QR-based ticket scanning service
-
-Why This Project Exists
-
-TicketHub is intentionally backend-focused.
-
-It exists to demonstrate:
-
-* System design thinking
-* Data consistency handling
-* Real-world failure awareness
-* Maintainable backend architecture
-
-UI simplicity is a conscious tradeoff.
-
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript
+- **Frontend**: Next.js 14 (App Router), React, TypeScript
+- **Styling**: Tailwind CSS with custom Kenyan theme
 - **Database**: MongoDB with Prisma ORM
-- **Payments**: Stripe
-- **3D Graphics**: Three.js with React Three Fiber
-- **Real-time**: Socket.io
-- **Styling**: Tailwind CSS
+- **Authentication**: JWT-based with role management
+- **Payments**: Paystack (Kenyan Shillings)
+- **Real-time**: Socket.IO for live updates
+- **QR Codes**: qrcode library
 
-## Getting Started
+## 📁 Project Structure
+
+```
+TicketHub/
+├── app/                    # Next.js App Router pages
+│   ├── api/               # API routes
+│   │   ├── admin/        # Admin endpoints
+│   │   ├── auth/          # Authentication
+│   │   ├── events/        # Event CRUD
+│   │   ├── owner/         # Organizer endpoints
+│   │   ├── paystack/      # Payment integration
+│   │   └── tickets/       # Ticket management
+│   ├── auth/              # Auth pages
+│   ├── dashboard/         # Role-based dashboards
+│   ├── events/            # Event browsing
+│   └── tickets/           # Ticket pages
+├── components/            # React components
+├── lib/                   # Utility libraries
+│   ├── auth.ts           # Authentication helpers
+│   ├── paystack.ts      # Paystack integration
+│   ├── socket.ts        # WebSocket setup
+│   └── ...
+├── prisma/               # Database schema
+└── scripts/              # Utility scripts
+```
+
+## 🎨 Kenyan Theme Design System
+
+### Color Palette
+| Color | Hex | Usage |
+|-------|-----|-------|
+| Kenyan Black | `#0B0F14` | Primary background |
+| Kenyan Red | `#BB1E10` | Accent |
+| Kenyan Green | `#006B3C` | Primary accent |
+| Kenyan Gold | `#CFAF3F` | Highlights |
+| Kenyan Cream | `#F5F7FA` | Text |
+
+### Design Features
+- Dark mode first
+- Glass morphism effects
+- Gradient accents
+- Smooth animations
+- Mobile-responsive
+
+## 🚦 Getting Started
 
 ### Prerequisites
-
-- Node.js 18+ and npm
-- MongoDB database (local or MongoDB Atlas)
-- Stripe account (for payment processing)
+- Node.js 18+
+- MongoDB instance
+- Paystack account (live/test keys)
 
 ### Installation
 
-1. Clone the repository
+1. Clone the repository:
+```bash
+git clone https://github.com/your-repo/TicketHub.git
+cd TicketHub
+```
+
 2. Install dependencies:
-   ```bash
-   npm install
-   ```
+```bash
+npm install
+```
 
 3. Set up environment variables:
-   ```bash
-   cp .env.example .env
-   ```
-   Then edit `.env` with your MongoDB connection string, Stripe keys, and JWT secret.
-   
-   MongoDB connection string format:
-   ```
-   DATABASE_URL="mongodb://localhost:27017/tickethub"
-   ```
-   Or for MongoDB Atlas:
-   ```
-   DATABASE_URL="mongodb+srv://username:password@cluster.mongodb.net/tickethub"
-   ```
-
-4. Set up the database:
-   ```bash
-   npx prisma generate
-   npx prisma db push
-   ```
-
-5. Run the development server:
-   ```bash
-   npm run dev
-   ```
-
-6. Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## Project Structure
-
-```
-Ticket Hub/
-├── app/                    # Next.js App Router
-│   ├── (auth)/            # Authentication pages
-│   ├── (dashboard)/       # Dashboard pages
-│   ├── api/               # API routes
-│   └── layout.tsx         # Root layout
-├── components/             # React components
-│   ├── events/            # Event-related components
-│   ├── seats/             # Seat map components
-│   ├── tickets/           # Ticket components
-│   └── ui/                # Reusable UI components
-├── lib/                   # Utility functions
-│   ├── auth.ts            # Authentication helpers
-│   ├── stripe.ts          # Stripe integration
-│   └── db.ts              # Database client
-├── prisma/                # Database schema
-└── public/                # Static assets
+```bash
+cp .env.example .env
 ```
 
-## Development
+4. Configure `.env`:
+```env
+DATABASE_URL=mongodb://localhost:27017/tickethub
+JWT_SECRET=your-jwt-secret
+PAYSTACK_PUBLIC_KEY=pk_live_xxxxx
+PAYSTACK_SECRET_KEY=sk_live_xxxxx
+```
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run db:studio` - Open Prisma Studio
-- `npm run db:push` - Push schema changes to database
+5. Generate Prisma client:
+```bash
+npx prisma generate
+```
 
-## License
+6. Run the development server:
+```bash
+npm run dev
+```
 
-MIT
+Visit `http://localhost:3000`
 
+## 🔐 User Roles
+
+| Role | Access |
+|------|--------|
+| ADMIN | Full platform access, user management, payouts |
+| ORGANIZER | Event creation, sales analytics, payout settings |
+| EVENT_OWNER | Manage own events |
+| ATTENDEE | Browse events, buy tickets, view bookings |
+| SCANNER | QR code scanning only |
+
+## 💳 Payment Flow
+
+1. User selects event and ticket quantity
+2. System creates PENDING tickets
+3. Paystack checkout initiated with KES amount
+4. User redirected to Paystack payment page
+5. On success, webhook updates ticket to CONFIRMED
+6. QR code generated and available in dashboard
+
+## 📝 API Endpoints
+
+### Authentication
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `POST /api/auth/logout` - User logout
+
+### Events
+- `GET /api/events` - List events
+- `POST /api/events` - Create event (Organizer+)
+- `GET /api/events/[id]` - Get event details
+
+### Tickets
+- `POST /api/tickets/create` - Create tickets
+- `POST /api/tickets/checkout` - Initialize payment
+- `GET /api/tickets/my` - User's tickets
+
+### Payments
+- `POST /api/paystack/initialize` - Start payment
+- `GET /api/paystack/verify/[ref]` - Verify payment
+- `POST /api/paystack/webhook` - Payment webhook
+
+## 🔧 Scripts
+
+```bash
+# Create admin user
+node scripts/create-admin.js
+
+# Reset admin password
+node scripts/reset-admin-password.js
+
+# Fix MongoDB indexes
+node scripts/fix-mongodb-indexes.js
+```
+
+## 📄 License
+
+MIT License - See LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- Paystack for payment integration
+- Next.js team for the amazing framework
+- Kenya's event organizers and attendees
+
+---
+
+Built with ❤️ in Kenya 🇰🇪
