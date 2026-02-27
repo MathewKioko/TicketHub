@@ -99,6 +99,7 @@ model User {
   auditLogs           AuditLog[]
   eventOwnerProfile   EventOwnerProfile?
   ownedPayouts        Payout[]
+  payments            Payment[]
 
   @@map("users")
 }
@@ -137,7 +138,6 @@ model EventOwnerProfile {
   // Relations
   user User @relation(fields: [userId], references: [id])
 
-  @@index([userId])
   @@map("event_owner_profiles")
 }
 
@@ -270,7 +270,7 @@ model Payment {
   eventOwnerPayout Float    @default(0) // What goes to event owner
   
   // Paystack
-  paystackReference      String?  @unique
+  paystackReference      String?
   paystackTransactionId  String?
   paystackCustomerId     String?
   
