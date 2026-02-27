@@ -156,7 +156,7 @@ export default function ManageEventPage() {
               </div>
               <div className="flex items-center gap-3">
                 <DollarSign className="w-5 h-5 text-primary-600" />
-                <span className="font-semibold">${event.basePrice.toFixed(2)}</span>
+                <span className="font-semibold">KES {event.basePrice.toLocaleString()}</span>
               </div>
             </div>
           </Card>

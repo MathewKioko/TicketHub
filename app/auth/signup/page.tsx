@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, User, Mail, Lock, Phone, ArrowRight, CheckCircle } from 'lucide-react'
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -43,8 +43,6 @@ export default function SignupPage() {
       if (response.ok) {
         setSuccess('Registration successful! Use the verification token below to verify your account.')
         setVerificationToken(data.verificationToken || '')
-        // In production, redirect to verification page
-        // router.push('/auth/verify')
       } else {
         setError(data.error || 'Registration failed')
       }
@@ -56,123 +54,178 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+    <div className="min-h-screen bg-mesh flex items-center justify-center p-4">
+      {/* Background Effects */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-kenyan-green/20 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-kenyan-gold/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }} />
+      </div>
+
+      <div className="max-w-md w-full glass-dark rounded-2xl p-8 relative z-10">
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-3xl font-bold gradient-text mb-2">
-            <Sparkles className="w-8 h-8 text-primary-500" />
-            Ticket Hub
+          <Link href="/" className="inline-flex items-center gap-2 text-3xl font-bold mb-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-kenyan-green to-kenyan-accent flex items-center justify-center">
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
+            <span className="gradient-text">TicketHub</span>
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">Create Account</h1>
-          <p className="text-gray-600 mt-2">Join Ticket Hub today</p>
+          <h1 className="text-2xl font-bold text-white mb-2">Create Account</h1>
+          <p className="text-kenyan-cream/60">Join Kenya's best event platform</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <div className="bg-kenyan-red/20 border border-kenyan-red/30 text-kenyan-red px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-              <p>{success}</p>
+            <div className="bg-kenyan-green/20 border border-kenyan-green/30 text-kenyan-green px-4 py-3 rounded-lg text-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle className="w-5 h-5" />
+                <span className="font-semibold">Registration Successful!</span>
+              </div>
+              <p className="text-kenyan-cream/80 text-xs">{success}</p>
               {verificationToken && (
-                <div className="mt-3 p-3 bg-white rounded border">
-                  <p className="text-sm font-medium">Verification Token:</p>
-                  <code className="text-sm bg-gray-100 px-2 py-1 rounded block mt-1 break-all">
+                <div className="mt-3 p-3 bg-kenyan-black/50 rounded-lg border border-white/10">
+                  <p className="text-xs font-medium text-kenyan-cream/60 mb-1">Verification Token:</p>
+                  <code className="text-sm text-kenyan-gold bg-kenyan-black px-2 py-1.5 rounded block break-all">
                     {verificationToken}
                   </code>
-                  <p className="text-xs mt-2 text-gray-600">
-                    <Link href="/auth/verify" className="text-primary-600 hover:text-primary-700 underline">
-                      Click here to verify your account
-                    </Link>
-                  </p>
+                  <Link href="/auth/verify" className="text-xs mt-2 text-kenyan-gold hover:text-kenyan-cream underline block">
+                    Click here to verify your account →
+                  </Link>
                 </div>
               )}
             </div>
           )}
 
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="name" className="block text-sm font-medium text-kenyan-cream mb-2">
               Full Name
             </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
-              placeholder="Enter your full name"
-              required
-            />
+            <div className="relative">
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-kenyan-cream/40" />
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                className="w-full pl-12 pr-4 py-3.5 bg-kenyan-black/50 border border-white/10 rounded-xl text-kenyan-cream placeholder-kenyan-cream/40 focus:border-kenyan-green/50 focus:outline-none focus:ring-2 focus:ring-kenyan-green/20 transition-all"
+                placeholder="Enter your full name"
+                required
+              />
+            </div>
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-kenyan-cream mb-2">
               Email
             </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
-              placeholder="Enter your email"
-              required
-            />
+            <div className="relative">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-kenyan-cream/40" />
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full pl-12 pr-4 py-3.5 bg-kenyan-black/50 border border-white/10 rounded-xl text-kenyan-cream placeholder-kenyan-cream/40 focus:border-kenyan-green/50 focus:outline-none focus:ring-2 focus:ring-kenyan-green/20 transition-all"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
           </div>
 
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="phone" className="block text-sm font-medium text-kenyan-cream mb-2">
               Phone (Optional)
             </label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
-              placeholder="Enter your phone number"
-            />
+            <div className="relative">
+              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-kenyan-cream/40" />
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                className="w-full pl-12 pr-4 py-3.5 bg-kenyan-black/50 border border-white/10 rounded-xl text-kenyan-cream placeholder-kenyan-cream/40 focus:border-kenyan-green/50 focus:outline-none focus:ring-2 focus:ring-kenyan-green/20 transition-all"
+                placeholder="Enter your phone number"
+              />
+            </div>
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="password" className="block text-sm font-medium text-kenyan-cream mb-2">
               Password
             </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
-              placeholder="Create a password"
-              required
-              minLength={8}
-            />
+            <div className="relative">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-kenyan-cream/40" />
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full pl-12 pr-4 py-3.5 bg-kenyan-black/50 border border-white/10 rounded-xl text-kenyan-cream placeholder-kenyan-cream/40 focus:border-kenyan-green/50 focus:outline-none focus:ring-2 focus:ring-kenyan-green/20 transition-all"
+                placeholder="Create a password (min 8 characters)"
+                required
+                minLength={8}
+              />
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-kenyan-green to-kenyan-accent text-white py-3.5 px-4 rounded-xl font-semibold hover:shadow-kenyan-green hover:scale-[1.02] focus:ring-2 focus:ring-kenyan-green/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Creating Account...' : 'Create Account'}
+            {loading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Creating Account...
+              </>
+            ) : (
+              <>
+                Create Account
+                <ArrowRight className="w-5 h-5" />
+              </>
+            )}
           </button>
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-gray-600">
+          <p className="text-kenyan-cream/60">
             Already have an account?{' '}
-            <Link href="/auth/login" className="text-primary-600 hover:text-primary-700 font-semibold">
+            <Link href="/auth/login" className="text-kenyan-gold hover:text-kenyan-cream font-semibold transition-colors">
               Sign in
             </Link>
           </p>
+        </div>
+
+        {/* Benefits */}
+        <div className="mt-8 pt-6 border-t border-white/10">
+          <p className="text-xs text-kenyan-cream/40 text-center mb-4">Why join TicketHub?</p>
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="flex items-center gap-2 text-kenyan-cream/60">
+              <CheckCircle className="w-4 h-4 text-kenyan-green" />
+              <span>Instant Tickets</span>
+            </div>
+            <div className="flex items-center gap-2 text-kenyan-cream/60">
+              <CheckCircle className="w-4 h-4 text-kenyan-green" />
+              <span>Secure Payments</span>
+            </div>
+            <div className="flex items-center gap-2 text-kenyan-cream/60">
+              <CheckCircle className="w-4 h-4 text-kenyan-green" />
+              <span>QR Entry</span>
+            </div>
+            <div className="flex items-center gap-2 text-kenyan-cream/60">
+              <CheckCircle className="w-4 h-4 text-kenyan-green" />
+              <span>Best Events</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

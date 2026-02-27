@@ -19,7 +19,7 @@ export default function CreateEventPage() {
     category: '',
     imageUrl: '',
     basePrice: '',
-    currency: 'USD',
+    currency: 'KES',
   })
 
   const handleSubmit = async (e: React.FormEvent) => {

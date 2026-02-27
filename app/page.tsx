@@ -1,117 +1,209 @@
 import Link from 'next/link'
-import { Calendar, MapPin, Ticket, Users, Sparkles } from 'lucide-react'
+import { Calendar, MapPin, Ticket, Users, Sparkles, ArrowRight, Star, Shield, Zap } from 'lucide-react'
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-950 via-primary-900 to-primary-800 relative overflow-hidden">
+    <div className="min-h-screen bg-mesh relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-primary-400/20 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-primary-300/10 rounded-full blur-3xl animate-pulse-glow" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-kenyan-green/20 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-kenyan-gold/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-kenyan-red/10 rounded-full blur-3xl animate-pulse-glow" />
+        {/* Grid pattern overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
       </div>
 
       {/* Navigation */}
-      <nav className="container mx-auto px-4 py-6 flex justify-between items-center relative z-10">
-        <div className="text-3xl font-bold text-white flex items-center gap-2 animate-fade-in">
-          <Sparkles className="w-8 h-8 text-primary-300 animate-pulse" />
-          <span className="bg-gradient-to-r from-white to-primary-100 bg-clip-text text-transparent">
-            Ticket Hub
-          </span>
-        </div>
-        <div className="flex gap-4">
-          <Link
-            href="/events"
-            className="px-5 py-2.5 text-white/90 hover:text-white font-medium rounded-xl hover:bg-white/10 backdrop-blur-sm transition-all duration-300"
-          >
-            Browse Events
+      <nav className="sticky top-0 z-50 glass-dark border-b border-white/5">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <Link href="/" className="text-2xl font-bold flex items-center gap-2 animate-fade-in">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-kenyan-green to-kenyan-accent flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-white" />
+            </div>
+            <span className="gradient-text font-bold">
+              TicketHub
+            </span>
           </Link>
-          <Link
-            href="/auth/login"
-            className="px-5 py-2.5 text-white/90 hover:text-white font-medium rounded-xl hover:bg-white/10 backdrop-blur-sm transition-all duration-300"
-          >
-            Login
-          </Link>
-          <Link
-            href="/auth/signup"
-            className="px-5 py-2.5 text-white/90 hover:text-white font-medium rounded-xl hover:bg-white/10 backdrop-blur-sm transition-all duration-300"
-          >
-            Sign Up
-          </Link>
-          <Link
-            href="/events/create"
-            className="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-semibold shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/40 hover:from-primary-600 hover:to-primary-700 transition-all duration-300 hover:scale-105 active:scale-95"
-          >
-            Create Event
-          </Link>
+          <div className="flex gap-2 items-center">
+            <Link
+              href="/events"
+              className="px-4 py-2 text-kenyan-cream/80 hover:text-white hover:bg-white/5 font-medium rounded-lg transition-all duration-300"
+            >
+              Browse Events
+            </Link>
+            <Link
+              href="/auth/login"
+              className="px-4 py-2 text-kenyan-cream/80 hover:text-white hover:bg-white/5 font-medium rounded-lg transition-all duration-300"
+            >
+              Login
+            </Link>
+            <Link
+              href="/auth/signup"
+              className="px-4 py-2 text-kenyan-cream/80 hover:text-white hover:bg-white/5 font-medium rounded-lg transition-all duration-300"
+            >
+              Sign Up
+            </Link>
+            <Link
+              href="/events/create"
+              className="px-5 py-2.5 bg-gradient-to-r from-kenyan-green to-kenyan-accent text-white rounded-lg font-semibold shadow-lg shadow-kenyan-green/30 hover:shadow-xl hover:shadow-kenyan-green/40 hover:scale-105 transition-all duration-300"
+            >
+              Create Event
+            </Link>
+          </div>
         </div>
       </nav>
 
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-24 md:py-32 text-center relative z-10">
-        <div className="animate-fade-in-up">
-          <h1 className="text-6xl md:text-8xl lg:text-9xl font-extrabold text-white mb-8 leading-tight text-shadow-xl">
-            The Future of
+        <div className="animate-fade-in-up max-w-5xl mx-auto">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-kenyan-gold/30 mb-8 animate-fade-in">
+            <Star className="w-4 h-4 text-kenyan-gold" />
+            <span className="text-sm text-kenyan-gold font-medium">Kenya's #1 Event Platform</span>
+          </div>
+          
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold text-white mb-6 leading-tight">
+            Discover Kenya's
             <br />
             <span className="gradient-text text-glow">
-              Event Management
+              Hottest Events
             </span>
           </h1>
-          <p className="text-xl md:text-2xl text-primary-100/90 mb-12 max-w-3xl mx-auto leading-relaxed font-light text-shadow">
-            Discover, book, and attend events with ease. Create stunning events,
-            manage ticket sales, and track attendance in real time.
+          <p className="text-lg md:text-xl text-kenyan-cream/70 mb-10 max-w-2xl mx-auto leading-relaxed">
+            From Nairobi's vibrant nightlife to coastal festivals — book your tickets instantly with Paystack. 
+            Secure, fast, and trusted by thousands across Kenya.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up">
             <Link
               href="/events"
-              className="px-10 py-5 bg-white text-primary-900 rounded-xl font-bold text-lg shadow-premium-lg hover:shadow-glow-xl hover:scale-110 transition-all duration-500 hover:bg-primary-50 w-full sm:w-auto shine card-hover"
+              className="group px-8 py-4 bg-gradient-to-r from-kenyan-green to-kenyan-accent text-white rounded-xl font-bold text-lg shadow-xl shadow-kenyan-green/30 hover:shadow-kenyan-green hover:scale-105 transition-all duration-300 flex items-center gap-2"
             >
               Explore Events
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
               href="/events/create"
-              className="px-10 py-5 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-bold text-lg shadow-xl shadow-primary-500/40 hover:shadow-glow-xl hover:from-primary-600 hover:to-primary-700 hover:scale-110 transition-all duration-500 w-full sm:w-auto shine card-hover"
+              className="px-8 py-4 glass border border-white/10 text-white rounded-xl font-bold text-lg hover:bg-white/10 hover:scale-105 transition-all duration-300"
             >
               Create Event
             </Link>
+          </div>
+
+          {/* Trust indicators */}
+          <div className="mt-16 flex flex-wrap justify-center gap-8 text-kenyan-cream/60">
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-kenyan-green" />
+              <span className="text-sm">Secure Payments</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-kenyan-gold" />
+              <span className="text-sm">Instant Booking</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-kenyan-red" />
+              <span className="text-sm">50K+ Users</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Banner */}
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="glass rounded-2xl p-8 md:p-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div>
+              <div className="text-4xl md:text-5xl font-bold gradient-text mb-2">10K+</div>
+              <div className="text-kenyan-cream/60">Events Hosted</div>
+            </div>
+            <div>
+              <div className="text-4xl md:text-5xl font-bold gradient-text mb-2">50K+</div>
+              <div className="text-kenyan-cream/60">Tickets Sold</div>
+            </div>
+            <div>
+              <div className="text-4xl md:text-5xl font-bold gradient-text mb-2">5K+</div>
+              <div className="text-kenyan-cream/60">Organizers</div>
+            </div>
+            <div>
+              <div className="text-4xl md:text-5xl font-bold gradient-text mb-2">99.9%</div>
+              <div className="text-kenyan-cream/60">Uptime</div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Features */}
       <div className="container mx-auto px-4 py-24 relative z-10">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+            Why Choose <span className="gradient-text">TicketHub</span>
+          </h2>
+          <p className="text-kenyan-cream/60 max-w-2xl mx-auto">
+            Built for the Kenyan market with love
+          </p>
+        </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           <FeatureCard
             icon={<Calendar className="w-10 h-10" />}
             title="Discover Events"
-            description="Browse through thousands of events by category, date, and location."
+            description="Browse through thousands of events by category, date, and location across Kenya."
+            color="kenyan-green"
             delay="0"
           />
           <FeatureCard
             icon={<Ticket className="w-10 h-10" />}
             title="Secure Booking"
-            description="Buy tickets safely with Stripe integration and instant confirmation."
+            description="Buy tickets safely with Paystack integration and instant mobile confirmation."
+            color="kenyan-gold"
             delay="100"
           />
           <FeatureCard
             icon={<MapPin className="w-10 h-10" />}
-            title="Easy Booking"
-            description="Quick and simple ticket booking process with instant confirmation."
+            title="Easy Access"
+            description="Quick QR code scanning at entry. Your ticket is always in your pocket."
+            color="kenyan-red"
             delay="200"
           />
           <FeatureCard
             icon={<Users className="w-10 h-10" />}
-            title="Real-time Tracking"
-            description="Track attendance and manage your events with live analytics."
+            title="Real-time Analytics"
+            description="Organizers get live attendance tracking and sales analytics dashboard."
+            color="kenyan-accent"
             delay="300"
           />
         </div>
       </div>
 
+      {/* CTA Section */}
+      <div className="container mx-auto px-4 py-24 relative z-10">
+        <div className="glass-premium rounded-3xl p-12 md:p-16 text-center premium-border">
+          <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
+            Ready to Host Your Event?
+          </h2>
+          <p className="text-kenyan-cream/70 max-w-2xl mx-auto mb-8">
+            Join thousands of organizers already using TicketHub to sell tickets and manage events across Kenya.
+          </p>
+          <Link
+            href="/events/create"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-kenyan-gold to-yellow-400 text-kenyan-black rounded-xl font-bold text-lg hover:shadow-kenyan-gold hover:scale-105 transition-all duration-300"
+          >
+            Start Selling Tickets
+            <ArrowRight className="w-5 h-5" />
+          </Link>
+        </div>
+      </div>
+
       {/* Footer */}
-      <footer className="container mx-auto px-4 py-12 border-t border-primary-700/50 relative z-10">
-        <div className="text-center text-primary-200/80">
-          <p>&copy; 2024 Ticket Hub. Built with Next.js and modern web technologies.</p>
+      <footer className="container mx-auto px-4 py-12 border-t border-white/10 relative z-10">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-kenyan-green to-kenyan-accent flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-kenyan-cream font-semibold">TicketHub</span>
+          </div>
+          <div className="text-center text-kenyan-cream/60 text-sm">
+            <p>&copy; 2024 TicketHub Kenya. Powered by Paystack.</p>
+          </div>
         </div>
       </footer>
     </div>
@@ -122,28 +214,36 @@ function FeatureCard({
   icon,
   title,
   description,
+  color = "kenyan-green",
   delay = "0",
 }: {
   icon: React.ReactNode
   title: string
   description: string
+  color?: string
   delay?: string
 }) {
+  const colorClasses: Record<string, string> = {
+    "kenyan-green": "text-kenyan-green group-hover:text-kenyan-green",
+    "kenyan-gold": "text-kenyan-gold group-hover:text-kenyan-gold",
+    "kenyan-red": "text-kenyan-red group-hover:text-kenyan-red",
+    "kenyan-accent": "text-kenyan-accent group-hover:text-kenyan-accent",
+  }
+
   return (
     <div 
-      className="glass-dark rounded-2xl p-8 md:p-10 hover:bg-white/20 hover:scale-110 transition-all duration-700 hover-lift group cursor-pointer card-hover premium-border"
+      className="glass-dark rounded-2xl p-8 hover:scale-105 transition-all duration-700 cursor-pointer card-hover group"
       style={{ animationDelay: `${delay}ms` }}
     >
-      <div className="text-primary-300 mb-6 group-hover:text-primary-100 transition-all duration-500 group-hover:scale-125 inline-block transform animate-float-slow">
+      <div className={`${colorClasses[color]} mb-6 group-hover:scale-125 transition-all duration-500 inline-block transform animate-float-slow`}>
         {icon}
       </div>
-      <h3 className="text-xl md:text-2xl font-extrabold text-white mb-4 group-hover:text-primary-50 transition-all duration-500 text-shadow">
+      <h3 className="text-xl font-bold text-white mb-3 group-hover:text-kenyan-cream transition-all duration-500">
         {title}
       </h3>
-      <p className="text-primary-200/90 leading-relaxed group-hover:text-primary-100 transition-all duration-500 text-base">
+      <p className="text-kenyan-cream/70 leading-relaxed group-hover:text-kenyan-cream/90 transition-all duration-500 text-sm">
         {description}
       </p>
     </div>
   )
 }
-

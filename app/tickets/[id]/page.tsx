@@ -121,7 +121,7 @@ export default function TicketReceiptPage() {
 
       downloadCalendarFile({
         title: ticket.event.title,
-        description: `Event: ${ticket.event.title}\n\n${ticket.event.description || ''}\n\nYou have ${ticket.quantity} ticket${ticket.quantity !== 1 ? 's' : ''} for this event.\n\nPrice: $${(ticket.price * ticket.quantity).toFixed(2)}\n\nDon't forget to bring your ticket QR code!`,
+        description: `Event: ${ticket.event.title}\n\n${ticket.event.description || ''}\n\nYou have ${ticket.quantity} ticket${ticket.quantity !== 1 ? 's' : ''} for this event.\n\nPrice: KES ${(ticket.price * ticket.quantity).toLocaleString()}\n\nDon't forget to bring your ticket QR code!`,
         location: ticket.event.venue,
         startDate: eventDate,
         endDate: endDate,
@@ -234,7 +234,7 @@ export default function TicketReceiptPage() {
                 <div className="text-right">
                   <div className="text-sm text-gray-600 mb-1">Total Price</div>
                   <div className="text-2xl font-bold gradient-text">
-                    ${(ticket.price * ticket.quantity).toFixed(2)}
+                    KES {(ticket.price * ticket.quantity).toLocaleString()}
                   </div>
                 </div>
               </div>

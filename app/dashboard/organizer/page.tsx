@@ -128,7 +128,7 @@ export default function OrganizerDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-green-100 text-sm mb-2 font-bold">Total Revenue</p>
-                  <p className="text-4xl font-extrabold text-shadow-lg">${stats.totalRevenue.toFixed(2)}</p>
+                  <p className="text-4xl font-extrabold text-shadow-lg">KES {stats.totalRevenue.toLocaleString()}</p>
                 </div>
                 <DollarSign className="w-14 h-14 opacity-70 animate-float-slow" />
               </div>
@@ -246,7 +246,7 @@ const OrganizerEventCard = memo(({ event, index }: { event: Event; index: number
               <div className="text-right">
                 <div className="text-xs text-gray-500 font-medium mb-1">Revenue</div>
                 <div className="font-bold text-lg gradient-text">
-                  ${revenue}
+                  KES {revenue}
                 </div>
               </div>
             </div>

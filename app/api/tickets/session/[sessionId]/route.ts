@@ -7,10 +7,18 @@ export async function GET(
   { params }: { params: { sessionId: string } }
 ) {
   try {
+    const { sessionId } = params
+    
+    // Determine if this is a Stripe session ID or Paystack reference
+    // Paystack references start with "TICKET_"
+    const isPaystackReference = sessionId.startsWith('TICKET_')
+    
+    const whereClause = isPaystackReference
+      ? { paystackReference: sessionId }
+      : { stripeSessionId: sessionId }
+
     const tickets = await prisma.ticket.findMany({
-      where: {
-        stripeSessionId: params.sessionId,
-      },
+      where: whereClause,
       select: {
         id: true,
         price: true,

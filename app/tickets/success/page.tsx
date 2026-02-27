@@ -35,18 +35,35 @@ function TicketSuccessContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const sessionId = searchParams.get('session_id')
+  const reference = searchParams.get('reference') // Paystack reference
   const [tickets, setTickets] = useState<TicketData[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (sessionId) {
+    if (sessionId || reference) {
       fetchTickets()
       // Verify payment status after loading tickets
       setTimeout(() => verifyPaymentStatus(), 1000)
     }
-  }, [sessionId])
+  }, [sessionId, reference])
 
   const verifyPaymentStatus = async () => {
+    // Handle Paystack reference verification
+    if (reference) {
+      try {
+        const res = await fetch(`/api/paystack/verify/${reference}`)
+        const data = await res.json()
+        if (res.ok && data.verified && data.tickets) {
+          // Refresh tickets if status was updated
+          setTimeout(() => fetchTickets(), 500)
+        }
+      } catch (error) {
+        console.error('Error verifying Paystack payment:', error)
+      }
+      return
+    }
+    
+    // Handle Stripe session verification
     if (!sessionId) return
     
     try {
@@ -63,7 +80,11 @@ function TicketSuccessContent() {
 
   const fetchTickets = async () => {
     try {
-      const res = await fetch(`/api/tickets/session/${sessionId}`)
+      // Use reference for Paystack or sessionId for Stripe
+      const ticketParams = reference 
+        ? `reference=${reference}` 
+        : `sessionId=${sessionId}`
+      const res = await fetch(`/api/tickets/session/${sessionId || reference}?${ticketParams}`)
       const data = await res.json()
       if (res.ok) {
         setTickets(data.tickets || [])
@@ -115,7 +136,7 @@ function TicketSuccessContent() {
 
       downloadCalendarFile({
         title: ticket.event.title,
-        description: `Event: ${ticket.event.title}\n\nYou have ${ticket.quantity || 1} ticket${(ticket.quantity || 1) !== 1 ? 's' : ''} for this event.\n\nPrice: $${((ticket.price || 0) * (ticket.quantity || 1)).toFixed(2)}\n\nDon't forget to bring your ticket QR code!`,
+        description: `Event: ${ticket.event.title}\n\nYou have ${ticket.quantity || 1} ticket${(ticket.quantity || 1) !== 1 ? 's' : ''} for this event.\n\nPrice: KES ${((ticket.price || 0) * (ticket.quantity || 1)).toLocaleString()}\n\nDon't forget to bring your ticket QR code!`,
         location: ticket.event.venue,
         startDate: eventDate,
         endDate: endDate,

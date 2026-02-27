@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback, memo, useRef } from 'react'
 import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
-import { Calendar, MapPin, DollarSign } from 'lucide-react'
+import { Calendar, MapPin, Ticket, Search, Sparkles, Filter } from 'lucide-react'
 import { format } from 'date-fns'
 import { AdvancedSearch } from '@/components/events/AdvancedSearch'
 
@@ -59,7 +59,7 @@ export default function EventsPage() {
     try {
       setLoading(true)
       
-      // Build query parameters (BEAST LEVEL: Advanced filtering)
+      // Build query parameters
       const params = new URLSearchParams()
       if (category) params.append('category', category)
       if (searchFilters.query) params.append('query', searchFilters.query)
@@ -84,7 +84,7 @@ export default function EventsPage() {
       }
       
       const res = await fetch(url, {
-        next: { revalidate: 60 } // Next.js caching
+        next: { revalidate: 60 }
       })
       const data = await res.json()
       const eventsData = data.events || []
@@ -100,7 +100,7 @@ export default function EventsPage() {
     }
   }, [category, searchFilters])
 
-  // Debounce search filters to avoid too many API calls
+  // Debounce search filters
   useEffect(() => {
     if (searchDebounceRef.current) {
       clearTimeout(searchDebounceRef.current)
@@ -108,7 +108,7 @@ export default function EventsPage() {
     
     searchDebounceRef.current = setTimeout(() => {
       fetchEvents()
-    }, searchFilters.query ? 500 : 0) // 500ms debounce for text search
+    }, searchFilters.query ? 500 : 0)
     
     return () => {
       if (searchDebounceRef.current) {
@@ -117,22 +117,22 @@ export default function EventsPage() {
     }
   }, [searchFilters, fetchEvents])
 
-  // Fetch immediately when category changes (no debounce)
+  // Fetch immediately when category changes
   useEffect(() => {
     fetchEvents()
   }, [category])
 
-  // Handle responsive column count for virtual scrolling
+  // Handle responsive column count
   useEffect(() => {
     const updateColumnCount = () => {
       if (typeof window === 'undefined') return
       const width = window.innerWidth
       if (width < 768) {
-        setColumnCount(1) // Mobile: 1 column
+        setColumnCount(1)
       } else if (width < 1024) {
-        setColumnCount(2) // Tablet: 2 columns
+        setColumnCount(2)
       } else {
-        setColumnCount(3) // Desktop: 3 columns
+        setColumnCount(3)
       }
     }
 
@@ -142,14 +142,14 @@ export default function EventsPage() {
   }, [])
 
   const categories = useMemo(() => [
-    'All',
-    'Music',
-    'Sports',
-    'Theater',
-    'Conference',
-    'Festival',
-    'Workshop',
-    'Other',
+    { name: 'All', icon: Sparkles },
+    { name: 'Music', icon: Ticket },
+    { name: 'Sports', icon: Calendar },
+    { name: 'Theater', icon: MapPin },
+    { name: 'Conference', icon: Filter },
+    { name: 'Festival', icon: Search },
+    { name: 'Workshop', icon: Filter },
+    { name: 'Other', icon: Sparkles },
   ], [])
 
   const handleCategoryChange = useCallback((cat: string) => {
@@ -158,116 +158,161 @@ export default function EventsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-xl text-gray-600">Loading events...</div>
+      <div className="min-h-screen bg-mesh flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-kenyan-green/30 border-t-kenyan-green rounded-full animate-spin" />
+          <p className="text-kenyan-cream/60">Loading events...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-primary-50/30">
-      <div className="container mx-auto px-4 py-12">
-        <div className="mb-10 animate-fade-in-up">
-          <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-2">
-            Discover <span className="gradient-text">Events</span>
-          </h1>
-          <p className="text-xl text-gray-600 mb-8">Find amazing events happening near you</p>
+    <div className="min-h-screen bg-mesh">
+      {/* Header */}
+      <div className="bg-kenyan-black/50 backdrop-blur-xl border-b border-white/5 sticky top-0 z-40">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-1">
+                Discover <span className="gradient-text">Events</span>
+              </h1>
+              <p className="text-kenyan-cream/60">Find amazing events across Kenya</p>
+            </div>
+            
+            {/* Search Bar */}
+            <div className="relative w-full md:w-96">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-kenyan-cream/40" />
+              <input
+                type="text"
+                placeholder="Search events..."
+                value={searchFilters.query}
+                onChange={(e) => setSearchFilters(prev => ({ ...prev, query: e.target.value }))}
+                className="w-full pl-12 pr-4 py-3 glass rounded-xl text-kenyan-cream placeholder-kenyan-cream/40 border border-white/10 focus:border-kenyan-green/50 focus:outline-none focus:ring-2 focus:ring-kenyan-green/20 transition-all"
+              />
+            </div>
+          </div>
 
-          <div className="flex flex-wrap gap-3 mb-8">
-            {categories.map((cat) => (
+          {/* Category Pills */}
+          <div className="flex flex-wrap gap-2 mt-6">
+            {categories.map(({ name, icon: Icon }) => (
               <button
-                key={cat}
-                onClick={() => handleCategoryChange(cat)}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 ${
-                  (cat === 'All' && !category) || category === cat
-                    ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/30'
-                    : 'bg-white text-gray-700 hover:bg-primary-50 hover:border-primary-300 border-2 border-gray-200'
+                key={name}
+                onClick={() => handleCategoryChange(name)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all duration-300 hover:scale-105 ${
+                  (name === 'All' && !category) || category === name
+                    ? 'bg-gradient-to-r from-kenyan-green to-kenyan-accent text-white shadow-lg shadow-kenyan-green/30'
+                    : 'glass text-kenyan-cream/80 hover:bg-white/10 border border-white/10'
                 }`}
               >
-                {cat}
+                <Icon className="w-4 h-4" />
+                {name}
               </button>
             ))}
           </div>
         </div>
+      </div>
 
+      <div className="container mx-auto px-4 py-8">
         {/* Advanced Search Component */}
         <AdvancedSearch
           filters={searchFilters}
           onFiltersChange={setSearchFilters}
         />
 
-        {/* Regular Grid - Virtual scrolling disabled for build compatibility */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        {/* Events Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mt-8">
           {events.map((event, index) => (
             <EventCard key={event.id} event={event} index={index} />
           ))}
         </div>
 
         {events.length === 0 && (
-          <Card variant="elevated" className="text-center py-16 animate-fade-in-up">
-            <div className="text-6xl mb-4">🎉</div>
-            <p className="text-gray-600 text-xl font-semibold mb-2">No events found</p>
-            <p className="text-gray-500">Try selecting a different category</p>
-          </Card>
+          <div className="glass rounded-2xl p-12 text-center mt-8">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-kenyan-green/10 flex items-center justify-center">
+              <Sparkles className="w-10 h-10 text-kenyan-green" />
+            </div>
+            <p className="text-xl text-white font-semibold mb-2">No events found</p>
+            <p className="text-kenyan-cream/60">Try selecting a different category or adjusting your search</p>
+          </div>
         )}
       </div>
     </div>
   )
 }
 
-// Memoized Event Card Component for Performance
+// Memoized Event Card Component
 const EventCard = memo(({ event, index }: { event: Event; index: number }) => {
   const formattedDate = useMemo(() => format(new Date(event.date), 'MMM dd, yyyy • h:mm a'), [event.date])
-  const formattedPrice = useMemo(() => `$${event.basePrice.toFixed(2)}`, [event.basePrice])
+  const formattedPrice = useMemo(() => `KES ${event.basePrice.toLocaleString()}`, [event.basePrice])
 
   return (
     <div className="animate-fade-in-up" style={{ animationDelay: `${index * 50}ms`, height: '100%' }}>
       <Link href={`/events/${event.id}`}>
-        <Card variant="elevated" className="hover:shadow-glow-xl transition-all duration-700 cursor-pointer h-full hover-lift group shine premium-border">
+        <div className="glass-dark rounded-2xl overflow-hidden hover:scale-[1.02] transition-all duration-500 cursor-pointer h-full card-hover group">
+          {/* Image */}
           {event.imageUrl && (
-            <div className="relative overflow-hidden rounded-xl mb-4 -mx-6 -mt-6">
+            <div className="relative overflow-hidden -mx-6 -mt-6 mb-4">
               <img
                 src={event.imageUrl}
                 alt={event.title}
                 className="w-full h-48 object-cover transition-transform duration-1000 group-hover:scale-125"
                 loading="lazy"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-              <div className="absolute inset-0 bg-primary-500/0 group-hover:bg-primary-500/10 transition-all duration-700" />
+              <div className="absolute inset-0 bg-gradient-to-t from-kenyan-black/80 via-kenyan-black/20 to-transparent" />
+              
+              {/* Category Badge */}
+              <div className="absolute top-4 left-4">
+                <span className="px-3 py-1.5 bg-kenyan-green/90 backdrop-blur-sm text-white text-xs font-bold rounded-full">
+                  {event.category}
+                </span>
+              </div>
+
+              {/* Price Badge */}
+              <div className="absolute top-4 right-4">
+                <span className="px-3 py-1.5 bg-kenyan-gold/90 backdrop-blur-sm text-kenyan-black text-xs font-bold rounded-full">
+                  {formattedPrice}
+                </span>
+              </div>
             </div>
           )}
-          <div className="flex-1">
-            <h3 className="text-xl font-bold mb-2 text-gray-900 group-hover:text-primary-600 transition-colors">{event.title}</h3>
-            <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">
+
+          <div className="p-5">
+            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-kenyan-gold transition-colors line-clamp-1">
+              {event.title}
+            </h3>
+            <p className="text-kenyan-cream/70 text-sm mb-4 line-clamp-2 leading-relaxed">
               {event.description}
             </p>
 
-            <div className="space-y-2 text-sm text-gray-600 mb-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-primary-500" />
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center gap-3 text-kenyan-cream/80">
+                <Calendar className="w-4 h-4 text-kenyan-green flex-shrink-0" />
                 <span className="font-medium">{formattedDate}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-primary-500" />
-                <span className="font-medium">{event.venue}</span>
+              <div className="flex items-center gap-3 text-kenyan-cream/80">
+                <MapPin className="w-4 h-4 text-kenyan-gold flex-shrink-0" />
+                <span className="font-medium truncate">{event.venue}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-primary-500" />
-                <span className="font-bold text-lg gradient-text">{formattedPrice}</span>
+              <div className="flex items-center gap-3 text-kenyan-cream/80">
+                <Ticket className="w-4 h-4 text-kenyan-red flex-shrink-0" />
+                <span className="font-medium">{event._count.tickets} tickets available</span>
               </div>
             </div>
 
-            <div className="pt-4 border-t border-gray-200">
-              <span className="text-sm text-primary-600 font-bold">
-                {event.organizer.name}
-              </span>
+            <div className="pt-4 mt-4 border-t border-white/10">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-kenyan-cream/60">By</span>
+                <span className="text-sm font-bold text-kenyan-gold">
+                  {event.organizer.name}
+                </span>
+              </div>
             </div>
           </div>
-        </Card>
+        </div>
       </Link>
     </div>
   )
 })
 
 EventCard.displayName = 'EventCard'
-

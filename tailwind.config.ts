@@ -9,6 +9,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Kenyan Theme Colors
+        kenyan: {
+          black: '#0B0F14',
+          red: '#BB1E10',
+          green: '#006B3C',
+          gold: '#CFAF3F',
+          cream: '#F5F7FA',
+          dark: '#121821',
+          charcoal: '#1A1F2B',
+          muted: '#6B7280',
+          accent: '#10B981',
+        },
         primary: {
           50: '#ecfdf5',
           100: '#d1fae5',
@@ -34,11 +46,16 @@ const config: Config = {
         'premium-lg': '0 25px 80px -20px rgba(0, 0, 0, 0.2)',
         'neon': '0 0 5px rgba(16, 185, 129, 0.5), 0 0 10px rgba(16, 185, 129, 0.3), 0 0 20px rgba(16, 185, 129, 0.2)',
         'float': '0 10px 30px rgba(0, 0, 0, 0.12), 0 1px 8px rgba(0, 0, 0, 0.08)',
+        // Kenyan themed shadows
+        'kenyan-gold': '0 0 20px rgba(207, 175, 63, 0.3)',
+        'kenyan-red': '0 0 20px rgba(187, 30, 16, 0.3)',
+        'kenyan-green': '0 0 20px rgba(0, 107, 60, 0.3)',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
         'mesh-gradient': 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+        'kenyan-gradient': 'linear-gradient(135deg, #0B0F14 0%, #1A1F2B 50%, #121821 100%)',
       },
       animation: {
         'fade-in': 'fadeIn 0.6s ease-out',
@@ -60,6 +77,7 @@ const config: Config = {
         'gradient-y': 'gradientY 15s ease infinite',
         'spin-slow': 'spin 3s linear infinite',
         'bounce-soft': 'bounceSoft 2s ease-in-out infinite',
+        'kenyan-pulse': 'kenyanPulse 2s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -126,6 +144,10 @@ const config: Config = {
         gradientY: {
           '0%, 100%': { 'background-position': '50% 0%' },
           '50%': { 'background-position': '50% 100%' },
+        },
+        kenyanPulse: {
+          '0%, 100%': { boxShadow: '0 0 20px rgba(207, 175, 63, 0.3)' },
+          '50%': { boxShadow: '0 0 40px rgba(207, 175, 63, 0.6)' },
         },
       },
       backdropBlur: {
