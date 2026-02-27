@@ -1,7 +1,52 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Calendar, MapPin, Ticket, Users, Sparkles, ArrowRight, Star, Shield, Zap } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Calendar, MapPin, Ticket, Users, Sparkles, ArrowRight, Star, Shield, Zap, User } from 'lucide-react'
+
+interface UserData {
+  id: string
+  name: string
+  email: string
+  role: string
+}
 
 export default function HomePage() {
+  const router = useRouter()
+  const [user, setUser] = useState<UserData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    checkAuth()
+  }, [])
+
+  const checkAuth = async () => {
+    try {
+      const res = await fetch('/api/auth/me')
+      if (res.ok) {
+        const data = await res.json()
+        setUser(data.user)
+      }
+    } catch (error) {
+      // Not logged in
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      setUser(null)
+      router.push('/')
+      router.refresh()
+    } catch (error) {
+      console.error('Logout failed:', error)
+    }
+  }
+
+  const isOrganizer = user?.role === 'ORGANIZER' || user?.role === 'EVENT_OWNER' || user?.role === 'ADMIN'
   return (
     <div className="min-h-screen bg-mesh relative overflow-hidden">
       {/* Animated Background Elements */}
@@ -25,30 +70,90 @@ export default function HomePage() {
             </span>
           </Link>
           <div className="flex gap-2 items-center">
-            <Link
-              href="/events"
-              className="px-4 py-2 text-kenyan-cream/80 hover:text-white hover:bg-white/5 font-medium rounded-lg transition-all duration-300"
-            >
-              Browse Events
-            </Link>
-            <Link
-              href="/auth/login"
-              className="px-4 py-2 text-kenyan-cream/80 hover:text-white hover:bg-white/5 font-medium rounded-lg transition-all duration-300"
-            >
-              Login
-            </Link>
-            <Link
-              href="/auth/signup"
-              className="px-4 py-2 text-kenyan-cream/80 hover:text-white hover:bg-white/5 font-medium rounded-lg transition-all duration-300"
-            >
-              Sign Up
-            </Link>
-            <Link
-              href="/events/create"
-              className="px-5 py-2.5 bg-gradient-to-r from-kenyan-green to-kenyan-accent text-white rounded-lg font-semibold shadow-lg shadow-kenyan-green/30 hover:shadow-xl hover:shadow-kenyan-green/40 hover:scale-105 transition-all duration-300"
-            >
-              Create Event
-            </Link>
+            {!loading && (
+              <>
+                {user ? (
+                  // Logged in - show user menu
+                  <div className="flex items-center gap-3">
+                    {/* Switch to Attendee mode if organizer */}
+                    {isOrganizer && (
+                      <button
+                        onClick={() => router.push('/dashboard/organizer')}
+                        className="px-4 py-2 text-kenyan-cream/80 hover:text-white hover:bg-white/5 font-medium rounded-lg transition-all duration-300"
+                      >
+                        Organizer Dashboard
+                      </button>
+                    )}
+                    
+                    {/* Show Become Organizer if not organizer */}
+                    {!isOrganizer && (
+                      <Link
+                        href="/become-organizer"
+                        className="px-4 py-2 text-kenyan-gold hover:text-white hover:bg-white/5 font-medium rounded-lg transition-all duration-300"
+                      >
+                        Become Organizer
+                      </Link>
+                    )}
+
+                    {/* User dropdown */}
+                    <div className="relative group">
+                      <button className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/10">
+                        <div className="w-8 h-8 bg-kenyan-green rounded-full flex items-center justify-center">
+                          <User className="w-4 h-4 text-white" />
+                        </div>
+                      </button>
+                      
+                      {/* Dropdown menu */}
+                      <div className="absolute right-0 top-full mt-1 w-48 bg-gray-900 rounded-lg shadow-lg border border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                        <div className="p-2">
+                          <p className="text-xs text-gray-400 px-2 py-1">Signed in as</p>
+                          <p className="text-sm font-medium text-white px-2 truncate">{user.email}</p>
+                          <p className="text-xs text-gray-500 px-2 pb-2 capitalize">{user.role.toLowerCase().replace('_', ' ')}</p>
+                          <hr className="my-2 border-gray-700" />
+                          <button 
+                            onClick={handleLogout}
+                            className="flex items-center gap-2 px-2 py-2 text-sm text-red-400 hover:bg-red-900/30 rounded w-full"
+                          >
+                            Logout
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  // Not logged in - show login/signup
+                  <>
+                    <Link
+                      href="/events"
+                      className="px-4 py-2 text-kenyan-cream/80 hover:text-white hover:bg-white/5 font-medium rounded-lg transition-all duration-300"
+                    >
+                      Browse Events
+                    </Link>
+                    <Link
+                      href="/auth/login"
+                      className="px-4 py-2 text-kenyan-cream/80 hover:text-white hover:bg-white/5 font-medium rounded-lg transition-all duration-300"
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      href="/auth/signup"
+                      className="px-4 py-2 text-kenyan-cream/80 hover:text-white hover:bg-white/5 font-medium rounded-lg transition-all duration-300"
+                    >
+                      Sign Up
+                    </Link>
+                  </>
+                )}
+              </>
+            )}
+            {/* Create Event button - only for organizers */}
+            {isOrganizer && (
+              <Link
+                href="/events/create"
+                className="px-5 py-2.5 bg-gradient-to-r from-kenyan-green to-kenyan-accent text-white rounded-lg font-semibold shadow-lg shadow-kenyan-green/30 hover:shadow-xl hover:shadow-kenyan-green/40 hover:scale-105 transition-all duration-300"
+              >
+                Create Event
+              </Link>
+            )}
           </div>
         </div>
       </nav>
@@ -81,12 +186,22 @@ export default function HomePage() {
               Explore Events
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <Link
-              href="/events/create"
-              className="px-8 py-4 glass border border-white/10 text-white rounded-xl font-bold text-lg hover:bg-white/10 hover:scale-105 transition-all duration-300"
-            >
-              Create Event
-            </Link>
+            {isOrganizer && (
+              <Link
+                href="/events/create"
+                className="px-8 py-4 glass border border-white/10 text-white rounded-xl font-bold text-lg hover:bg-white/10 hover:scale-105 transition-all duration-300"
+              >
+                Create Event
+              </Link>
+            )}
+            {!isOrganizer && user && (
+              <Link
+                href="/become-organizer"
+                className="px-8 py-4 glass border border-kenyan-gold/30 text-kenyan-gold rounded-xl font-bold text-lg hover:bg-kenyan-gold/10 hover:scale-105 transition-all duration-300"
+              >
+                Become an Organizer
+              </Link>
+            )}
           </div>
 
           {/* Trust indicators */}
