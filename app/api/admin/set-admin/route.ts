@@ -2,8 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
 // Hidden admin endpoint to set a user as admin
-// Usage: POST /api/admin/set-admin?email=user@example.com&secret=YOUR_SECRET_KEY
+// Usage: GET or POST /api/admin/set-admin?email=user@example.com&secret=YOUR_SECRET_KEY
+export async function GET(request: NextRequest) {
+  return handleRequest(request)
+}
+
 export async function POST(request: NextRequest) {
+  return handleRequest(request)
+}
+
+async function handleRequest(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const email = searchParams.get('email')
