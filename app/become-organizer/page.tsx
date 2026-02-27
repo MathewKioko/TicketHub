@@ -10,6 +10,7 @@ interface User {
   email: string
   name: string
   role: string
+  organizerRequestStatus?: string
 }
 
 export default function BecomeOrganizerPage() {
@@ -22,6 +23,16 @@ export default function BecomeOrganizerPage() {
     checkAuth()
   }, [])
 
+  // Check for status query param from login redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const status = params.get('status')
+    if (status === 'pending') {
+      // User was redirected after login with PENDING_ORGANIZER role
+      // The user state should already be loaded
+    }
+  }, [])
+
   const checkAuth = async () => {
     try {
       const res = await fetch('/api/auth/me')
@@ -32,6 +43,11 @@ export default function BecomeOrganizerPage() {
         // If already an organizer or admin, redirect
         if (['ORGANIZER', 'EVENT_OWNER', 'ADMIN'].includes(data.user.role)) {
           router.push('/dashboard/organizer')
+        }
+        
+        // If PENDING_ORGANIZER, stay on page but show pending status
+        if (data.user.role === 'PENDING_ORGANIZER') {
+          setUser({ ...data.user, organizerRequestStatus: 'pending' })
         }
       }
     } catch (error) {
@@ -74,6 +90,7 @@ export default function BecomeOrganizerPage() {
 
   const isLoggedIn = !!user
   const isAttendee = user?.role === 'ATTENDEE'
+  const isPendingOrganizer = user?.role === 'PENDING_ORGANIZER' || user?.organizerRequestStatus === 'pending'
 
   return (
     <div className="min-h-screen bg-mesh">
@@ -160,6 +177,36 @@ export default function BecomeOrganizerPage() {
           ) : null}
         </div>
 
+        {/* Pending Status Message */}
+        {isPendingOrganizer && (
+          <div className="mt-8 glass border border-kenyan-gold/30 rounded-xl p-6 max-w-xl mx-auto">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-kenyan-gold/20 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 text-kenyan-gold animate-spin" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Request Pending Approval</h3>
+                <p className="text-kenyan-cream/60 text-sm">Your organizer request is being reviewed</p>
+              </div>
+            </div>
+            <p className="text-kenyan-cream/80 text-sm mb-4">
+              We have received your request to become an organizer. Our team will review your application 
+              and approve it shortly. You will receive an email once your request has been approved.
+            </p>
+            <div className="flex gap-3">
+              <Link 
+                href="/dashboard/attendee"
+                className="px-4 py-2 glass border border-white/10 text-white rounded-lg text-sm hover:bg-white/10"
+              >
+                Go to Dashboard
+              </Link>
+              <button className="px-4 py-2 text-kenyan-gold text-sm hover:underline">
+                Contact Support
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Benefits */}
         <div className="mt-20">
           <h2 className="text-3xl font-bold text-white text-center mb-12">
@@ -233,6 +280,10 @@ export default function BecomeOrganizerPage() {
             >
               {requesting ? 'Submitting...' : 'Request Access Now'} <ArrowRight className="w-5 h-5" />
             </button>
+          ) : isPendingOrganizer ? (
+            <p className="text-kenyan-gold/80">
+              Please wait while we review your request
+            </p>
           ) : null}
         </div>
       </div>
