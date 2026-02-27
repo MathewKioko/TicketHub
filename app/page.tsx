@@ -317,7 +317,7 @@ export default function HomePage() {
             <span className="text-kenyan-cream font-semibold">TicketHub</span>
           </div>
           <div className="text-center text-kenyan-cream/60 text-sm">
-            <p>&copy; 2024 TicketHub Kenya. Powered by Paystack.</p>
+            <p>&copy; 2026 TicketHub Kenya. Powered by Paystack.</p>
           </div>
         </div>
       </footer>
