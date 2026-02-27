@@ -211,7 +211,7 @@ model Ticket {
   
   // Ticket Details
   ticketType     TicketType @default(REGULAR)
-  ticketPrice    Float      // Price at time of purchase
+  ticketPrice    Float?      // Price at time of purchase (nullable for legacy data)
   price          Float      @default(0) // Alias for backward compatibility
   quantity       Int        @default(1)
   seatNumber     String?
