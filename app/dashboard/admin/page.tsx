@@ -44,14 +44,15 @@ export default function AdminDashboard() {
   const fetchDashboardData = async () => {
     try {
       const response = await fetch('/api/admin/dashboard')
+      const data = await response.json()
+      
       if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
           router.push('/auth/login')
           return
         }
-        throw new Error('Failed to fetch dashboard data')
+        throw new Error(data.error || data.details || 'Failed to fetch dashboard data')
       }
-      const data = await response.json()
       setStats(data.stats)
       setTopEvents(data.topEvents || [])
       setRecentPayments(data.recentPayments || [])
