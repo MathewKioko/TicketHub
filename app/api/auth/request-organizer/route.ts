@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     await prisma.user.update({
       where: { id: user.id },
       data: {
-        role: 'PENDING_ORGANIZER',
+        role: { set: 'PENDING_ORGANIZER' } as any,
         organizerRequestStatus: 'pending',
         organizerRequestAt: new Date(),
       }
