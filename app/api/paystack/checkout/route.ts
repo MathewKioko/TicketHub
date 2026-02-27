@@ -86,8 +86,9 @@ export async function POST(request: NextRequest) {
       0
     )
 
-    // Prices are in KES - send directly to Paystack
-    const amountInKES = Math.round(totalAmount)
+    // Prices are in KES - convert to cents (Paystack expects smallest currency unit)
+    // For KES: 1 KES = 100 cents
+    const amountInCents = Math.round(totalAmount * 100)
 
     // Generate unique reference
     const reference = generateTicketReference()
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
     // Initialize Paystack payment
     const payment = await initializePayment({
       email: user.email,
-      amount: amountInKES,
+      amount: amountInCents,
       reference,
       userId: currentUser.id,
       eventId: tickets[0].eventId,

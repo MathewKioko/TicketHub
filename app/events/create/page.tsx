@@ -153,9 +153,10 @@ export default function CreateEventPage() {
                       onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
                       className="px-4 py-3 border-2 border-r-0 border-gray-200 rounded-l-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none text-gray-900 bg-white/90 backdrop-blur-sm transition-all duration-300 hover:border-gray-300"
                     >
-                      <option value="USD">USD</option>
-                      <option value="EUR">EUR</option>
-                      <option value="GBP">GBP</option>
+                      <option value="KES">KES (Kenyan Shilling)</option>
+                      <option value="USD">USD (US Dollar)</option>
+                      <option value="EUR">EUR (Euro)</option>
+                      <option value="GBP">GBP (British Pound)</option>
                     </select>
                     <Input
                       type="number"

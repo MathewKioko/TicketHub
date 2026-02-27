@@ -86,8 +86,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Additional security checks
-    // Prices are stored in KES - compare directly
-    const expectedAmount = Math.round(firstTicket.price)
+    // Prices are stored in KES - Paystack returns amount in cents
+    const expectedAmount = Math.round(firstTicket.price * 100)
     if (verification.amount !== expectedAmount) {
       console.error('Amount mismatch:', {
         expected: expectedAmount,
