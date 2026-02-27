@@ -132,8 +132,9 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Admin dashboard error:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorStack = error instanceof Error ? error.stack : ''
     return NextResponse.json(
-      { error: 'Failed to fetch dashboard data', details: errorMessage },
+      { error: 'Failed to fetch dashboard data', details: errorMessage, stack: errorStack },
       { status: 500 }
     )
   }
