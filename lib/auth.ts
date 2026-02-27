@@ -11,7 +11,7 @@ const SALT_ROUNDS = 12
 export interface TokenPayload {
   userId: string
   email: string
-  role: 'ORGANIZER' | 'ATTENDEE' | 'ADMIN' | 'SCANNER' | 'EVENT_OWNER'
+  role: 'ORGANIZER' | 'ATTENDEE' | 'ADMIN' | 'SCANNER' | 'EVENT_OWNER' | 'PENDING_ORGANIZER'
 }
 
 export async function hashPassword(password: string): Promise<string> {

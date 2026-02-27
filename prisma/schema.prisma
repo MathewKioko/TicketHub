@@ -21,6 +21,7 @@ enum UserRole {
   ATTENDEE    // Ticket buyer
   ADMIN       // Platform admin
   SCANNER     // Ticket scanner
+  PENDING_ORGANIZER // Awaiting admin approval
 }
 
 enum TicketStatus {
@@ -75,6 +76,12 @@ model User {
   password  String?  // Optional for OAuth users
   googleId  String? // Google OAuth ID
   role      UserRole @default(ATTENDEE)
+
+  // Organizer request fields
+  organizerRequestStatus String?  // 'pending', 'approved', 'rejected'
+  organizerRequestAt     DateTime?
+  organizerApprovedAt   DateTime?
+  organizerNote         String?   // Admin note for approval/rejection
 
   // Authentication fields
   verified          Boolean   @default(false)
