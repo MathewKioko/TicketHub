@@ -298,7 +298,7 @@ export default function HomePage() {
             Join thousands of organizers already using TicketHub to sell tickets and manage events across Kenya.
           </p>
           <Link
-            href="/events/create"
+            href={isOrganizer ? "/dashboard/organizer" : "/become-organizer"}
             className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-kenyan-gold to-yellow-400 text-kenyan-black rounded-xl font-bold text-lg hover:shadow-kenyan-gold hover:scale-105 transition-all duration-300"
           >
             Start Selling Tickets
