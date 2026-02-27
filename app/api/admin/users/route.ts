@@ -41,6 +41,8 @@ export async function GET(request: NextRequest) {
           role: true,
           verified: true,
           createdAt: true,
+          organizerRequestStatus: true,
+          organizerRequestAt: true,
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,

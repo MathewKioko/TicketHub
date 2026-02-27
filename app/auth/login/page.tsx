@@ -38,6 +38,9 @@ export default function LoginPage() {
           router.push('/dashboard/admin')
         } else if (role === 'ORGANIZER' || role === 'EVENT_OWNER') {
           router.push('/dashboard/organizer')
+        } else if (role === 'PENDING_ORGANIZER') {
+          // Show pending status - redirect to become-organizer page
+          router.push('/become-organizer?status=pending')
         } else {
           router.push('/dashboard/attendee')
         }
