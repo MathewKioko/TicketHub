@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
         category,
         organizerId: currentUser.id,
         currency,
-        status,
+        status: status as any,
         ticketTypes: parsedTicketTypes as any,
         totalTickets,
         ticketsSold: 0,
@@ -171,9 +171,9 @@ export async function GET(request: NextRequest) {
     ])
 
     // Get ticket types from each event
-    const eventsWithTicketTypes = events.map(event => ({
+    const eventsWithTicketTypes = events.map((event: any) => ({
       ...event,
-      ticketTypes: event.ticketTypes as TicketTypeConfig[] || [],
+      ticketTypes: (event.ticketTypes as unknown as TicketTypeConfig[]) || [],
       availableTickets: event.totalTickets - event.ticketsSold,
     }))
 

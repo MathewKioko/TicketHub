@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
         eventId,
         userId: userId,
         price,
+        ticketPrice: price,
         qrCodeData,
         status: 'PENDING' as const,
         // Explicitly omit stripePaymentId and stripeSessionId to avoid unique constraint issues
