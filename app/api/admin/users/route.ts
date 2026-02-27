@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50')
     const role = searchParams.get('role')
     const search = searchParams.get('search')
+    const requestStatus = searchParams.get('requestStatus')
 
     const where: any = {}
     
@@ -29,6 +30,15 @@ export async function GET(request: NextRequest) {
         { name: { contains: search, mode: 'insensitive' } },
         { email: { contains: search, mode: 'insensitive' } },
       ]
+    }
+    if (requestStatus === 'pending') {
+      where.organizerRequestStatus = 'pending'
+    } else if (requestStatus === 'approved') {
+      where.organizerRequestStatus = 'approved'
+    } else if (requestStatus === 'rejected') {
+      where.organizerRequestStatus = 'rejected'
+    } else if (requestStatus === 'none') {
+      where.organizerRequestStatus = null
     }
 
     const [users, total] = await Promise.all([

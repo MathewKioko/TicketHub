@@ -11,6 +11,8 @@ interface User {
   role: string
   verified: boolean
   createdAt: string
+  organizerRequestStatus?: string | null
+  organizerRequestAt?: string | null
 }
 
 export default function AdminUsersPage() {
@@ -20,6 +22,7 @@ export default function AdminUsersPage() {
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [roleFilter, setRoleFilter] = useState('')
+  const [requestFilter, setRequestFilter] = useState('')
 
   useEffect(() => {
     fetchUsers()
@@ -49,7 +52,7 @@ export default function AdminUsersPage() {
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: newRole }),
+        body: JSON.stringify({ action: newRole === 'ADMIN' ? 'make_admin' : newRole === 'ORGANIZER' ? 'make_organizer' : 'make_attendee' }),
       })
       
       if (response.ok) {
@@ -60,11 +63,37 @@ export default function AdminUsersPage() {
     }
   }
 
+  const handleOrganizerRequest = async (userId: string, action: 'approve' | 'reject') => {
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setUsers(users.map(u => u.id === userId ? { 
+          ...u, 
+          role: data.user.role,
+          organizerRequestStatus: data.user.organizerRequestStatus 
+        } : u))
+      }
+    } catch (err) {
+      console.error('Failed to process organizer request:', err)
+    }
+  }
+
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesRole = !roleFilter || user.role === roleFilter
-    return matchesSearch && matchesRole
+    const matchesRequest = !requestFilter || 
+      (requestFilter === 'pending' && user.organizerRequestStatus === 'pending') ||
+      (requestFilter === 'approved' && user.organizerRequestStatus === 'approved') ||
+      (requestFilter === 'rejected' && user.organizerRequestStatus === 'rejected') ||
+      (requestFilter === 'none' && !user.organizerRequestStatus)
+    return matchesSearch && matchesRole && matchesRequest
   })
 
   const formatDate = (dateString: string) => {
@@ -133,7 +162,18 @@ export default function AdminUsersPage() {
               <option value="EVENT_OWNER">Event Owner</option>
               <option value="ATTENDEE">Attendee</option>
               <option value="SCANNER">Scanner</option>
-            </select>
+              </select>
+              <select
+                value={requestFilter}
+                onChange={(e) => setRequestFilter(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">All Requests</option>
+                <option value="pending">Pending Requests</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="none">No Request</option>
+              </select>
           </div>
         </div>
 
@@ -144,6 +184,7 @@ export default function AdminUsersPage() {
               <tr>
                 <th className="text-left py-3 px-6 text-sm font-medium text-gray-500">User</th>
                 <th className="text-left py-3 px-6 text-sm font-medium text-gray-500">Role</th>
+                <th className="text-left py-3 px-6 text-sm font-medium text-gray-500">Organizer Request</th>
                 <th className="text-left py-3 px-6 text-sm font-medium text-gray-500">Verified</th>
                 <th className="text-left py-3 px-6 text-sm font-medium text-gray-500">Joined</th>
                 <th className="text-left py-3 px-6 text-sm font-medium text-gray-500">Actions</th>
@@ -169,6 +210,16 @@ export default function AdminUsersPage() {
                     </span>
                   </td>
                   <td className="py-4 px-6">
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      user.organizerRequestStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      user.organizerRequestStatus === 'approved' ? 'bg-green-100 text-green-800' :
+                      user.organizerRequestStatus === 'rejected' ? 'bg-red-100 text-red-800' :
+                      'bg-gray-100 text-gray-500'
+                    }`}>
+                      {user.organizerRequestStatus || 'None'}
+                    </span>
+                  </td>
+                  <td className="py-4 px-6">
                     {user.verified ? (
                       <span className="text-green-600">✓ Verified</span>
                     ) : (
@@ -179,17 +230,35 @@ export default function AdminUsersPage() {
                     {formatDate(user.createdAt)}
                   </td>
                   <td className="py-4 px-6">
-                    <select
-                      value={user.role}
-                      onChange={(e) => updateUserRole(user.id, e.target.value)}
-                      className="text-sm border border-gray-300 rounded px-2 py-1"
-                    >
-                      <option value="ATTENDEE">Attendee</option>
-                      <option value="ORGANIZER">Organizer</option>
-                      <option value="EVENT_OWNER">Event Owner</option>
-                      <option value="SCANNER">Scanner</option>
-                      <option value="ADMIN">Admin</option>
-                    </select>
+                    <div className="flex items-center gap-2">
+                      {user.organizerRequestStatus === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleOrganizerRequest(user.id, 'approve')}
+                            className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleOrganizerRequest(user.id, 'reject')}
+                            className="text-xs bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+                      <select
+                        value={user.role}
+                        onChange={(e) => updateUserRole(user.id, e.target.value)}
+                        className="text-sm border border-gray-300 rounded px-2 py-1"
+                      >
+                        <option value="ATTENDEE">Attendee</option>
+                        <option value="ORGANIZER">Organizer</option>
+                        <option value="EVENT_OWNER">Event Owner</option>
+                        <option value="SCANNER">Scanner</option>
+                        <option value="ADMIN">Admin</option>
+                      </select>
+                    </div>
                   </td>
                 </tr>
               ))}
