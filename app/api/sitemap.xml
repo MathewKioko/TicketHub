@@ -1,0 +1,39 @@
+// app/api/sitemap.xml/route.ts
+import { NextResponse } from 'next/server';
+
+export const GET = async () => {
+  const baseUrl = 'https://tickethubke.app';
+
+  // Example: dynamically fetch events from your DB
+  const events = [
+    { slug: 'nairobi-concert-2026' },
+    { slug: 'mombasa-festival-2026' },
+  ];
+
+  const eventUrls = events
+    .map(
+      (event) => `
+  <url>
+    <loc>${baseUrl}/events/${event.slug}</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>`
+    )
+    .join('');
+
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${baseUrl}</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  ${eventUrls}
+</urlset>`;
+
+  return new NextResponse(sitemap, {
+    headers: {
+      'Content-Type': 'application/xml',
+    },
+  });
+};
