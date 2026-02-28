@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const baseUrl = 'https://ticket-hub-nine.vercel.app';
+const baseUrl = 'https://tickethubke.app';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Base static pages
