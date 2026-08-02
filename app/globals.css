@@ -1,0 +1,318 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    border-color: rgba(212, 175, 122, 0.1);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body {
+    @apply bg-onyx text-ivory antialiased;
+    background:
+      radial-gradient(ellipse at top left, rgba(212, 175, 122, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom right, rgba(201, 127, 102, 0.04) 0%, transparent 50%),
+      linear-gradient(180deg, #0A0A0B 0%, #121214 100%);
+    min-height: 100vh;
+    font-family: var(--font-inter), system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-playfair), Georgia, serif;
+  }
+
+  /* Custom scrollbar for dark theme */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #0A0A0B;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #8C6D3F, #D4AF7A);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #D4AF7A;
+  }
+
+  ::selection {
+    background: rgba(212, 175, 122, 0.3);
+    color: #F5F1E8;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* ===== Glass effects ===== */
+  .glass {
+    @apply bg-ash/70 backdrop-blur-xl border border-white/10;
+  }
+
+  .glass-dark {
+    @apply bg-coal/60 backdrop-blur-xl border border-white/5;
+  }
+
+  .glass-luxe {
+    @apply bg-ash/50 backdrop-blur-2xl border border-gold/20;
+  }
+
+  .glass-gold {
+    @apply bg-gradient-to-br from-gold/10 to-transparent backdrop-blur-xl border border-gold/20;
+  }
+
+  /* ===== Gold gradient text ===== */
+  .gradient-text {
+    @apply bg-gradient-to-r from-gold-light via-gold to-gold-dark bg-clip-text text-transparent;
+    background-size: 200% auto;
+    animation: gradientX 6s ease infinite;
+  }
+
+  .gradient-text-slow {
+    @apply bg-gradient-to-r from-gold-pale via-ivory to-gold bg-clip-text text-transparent;
+    background-size: 200% auto;
+    animation: gradientX 9s ease infinite;
+  }
+
+  .gradient-text-red {
+    @apply bg-gradient-to-r from-blush via-gold-light to-blush bg-clip-text text-transparent;
+    background-size: 200% auto;
+    animation: gradientX 6s ease infinite;
+  }
+
+  .gold-text {
+    @apply text-gold;
+  }
+
+  /* ===== Gradient borders ===== */
+  .gradient-border::before {
+    content: '';
+    @apply absolute inset-0 rounded-lg bg-gradient-to-r from-gold via-gold-light to-gold opacity-40 blur-sm -z-10;
+    background-size: 200% auto;
+    animation: gradientX 6s ease infinite;
+  }
+
+  .premium-border::before {
+    content: '';
+    @apply absolute -inset-0.5 rounded-xl bg-gradient-to-r from-gold via-gold-light to-gold opacity-25 blur-sm -z-10;
+    animation: pulse-soft 3s ease-in-out infinite;
+  }
+
+  .gold-ring {
+    @apply border border-gold/30;
+  }
+
+  /* ===== Hover effects (lightweight) ===== */
+  .hover-lift {
+    @apply transition-transform duration-200 ease-out;
+  }
+
+  .hover-lift:hover {
+    @apply -translate-y-1;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-200 ease-out;
+  }
+
+  .hover-scale:hover {
+    @apply scale-[1.03];
+  }
+
+  .smooth-scroll {
+    scroll-behavior: smooth;
+  }
+
+  /* ===== Text shadows ===== */
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  .text-shadow-lg {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+  }
+
+  .text-shadow-xl {
+    text-shadow: 0 6px 12px rgba(0, 0, 0, 0.7);
+  }
+
+  .text-glow {
+    text-shadow: 0 0 10px rgba(212, 175, 122, 0.4), 0 0 20px rgba(212, 175, 122, 0.2);
+  }
+
+  .text-glow-gold {
+    text-shadow: 0 0 10px rgba(212, 175, 122, 0.5), 0 0 20px rgba(212, 175, 122, 0.3);
+  }
+
+  /* ===== Background ===== */
+  .bg-mesh {
+    background:
+      radial-gradient(ellipse at 20% 80%, rgba(212, 175, 122, 0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(201, 127, 102, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(212, 175, 122, 0.05) 0%, transparent 70%),
+      linear-gradient(135deg, #0A0A0B 0%, #131316 50%, #17171A 100%);
+  }
+
+  .bg-luxe {
+    background: linear-gradient(180deg, #0A0A0B 0%, #121214 100%);
+  }
+
+  /* ===== Card ===== */
+  .card-hover {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.5), 0 0 30px rgba(212, 175, 122, 0.06);
+  }
+
+  /* ===== Luxury card ===== */
+  .luxe-card {
+    @apply bg-ash/60 backdrop-blur-xl border border-gold/15 rounded-2xl;
+  }
+
+  /* ===== Buttons ===== */
+  .btn-luxe {
+    @apply relative overflow-hidden px-6 py-3 rounded-lg font-semibold transition-all duration-200;
+    @apply bg-gradient-to-r from-gold-light via-gold to-gold-dark;
+    @apply text-onyx hover:shadow-glow-lg hover:scale-[1.03];
+  }
+
+  .btn-luxe-gold {
+    @apply relative overflow-hidden px-6 py-3 rounded-lg font-semibold transition-all duration-200;
+    @apply bg-gradient-to-r from-gold-light via-gold to-gold-dark;
+    @apply text-onyx hover:shadow-glow-lg hover:scale-[1.03];
+  }
+
+  .btn-luxe-red {
+    @apply relative overflow-hidden px-6 py-3 rounded-lg font-semibold transition-all duration-200;
+    @apply bg-gradient-to-r from-blush to-gold-dark;
+    @apply text-white hover:shadow-glow hover:scale-[1.03];
+  }
+
+  .btn-luxe-outline {
+    @apply relative overflow-hidden px-6 py-3 rounded-lg font-semibold transition-all duration-200;
+    @apply border border-gold/30 text-gold bg-transparent;
+    @apply hover:bg-gold/10 hover:border-gold/50 hover:scale-[1.03];
+  }
+
+  /* ===== Inputs ===== */
+  .input-luxe {
+    @apply w-full px-4 py-3 bg-coal/70 border border-white/10 rounded-xl text-ivory placeholder-taupe/60 focus:border-gold/40 focus:outline-none focus:ring-2 focus:ring-gold/20 transition-all duration-200;
+  }
+
+  /* ===== Divider ===== */
+  .divider-gold {
+    @apply border-t border-gold/15;
+  }
+
+  .divider-fade {
+    @apply border-t border-white/5;
+  }
+
+  /* ===== Status pills ===== */
+  .pill {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold;
+  }
+
+  .pill-gold {
+    @apply pill bg-gold/15 text-gold-light border border-gold/20;
+  }
+
+  .pill-green {
+    @apply pill bg-emerald-500/15 text-emerald-300 border border-emerald-500/20;
+  }
+
+  .pill-red {
+    @apply pill bg-blush/15 text-blush border border-blush/20;
+  }
+
+  .pill-amber {
+    @apply pill bg-amber-500/15 text-amber-300 border border-amber-500/20;
+  }
+
+  .pill-muted {
+    @apply pill bg-white/5 text-taupe border border-white/10;
+  }
+
+  /* ===== Animations (lightweight, no content hiding) ===== */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.3s ease-out both;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.25s ease-out both;
+  }
+
+  @keyframes scaleIn {
+    0% { transform: scale(0.98); opacity: 0.6; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .animate-scale-in-bounce {
+    animation: scaleIn 0.25s ease-out both;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .animate-float {
+    animation: float 5s ease-in-out infinite;
+  }
+
+  .animate-float-slow {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes pulseSoft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
+
+  .animate-pulse {
+    animation: pulseSoft 2.5s ease-in-out infinite;
+  }
+
+  @keyframes gradientX {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* Respect users who prefer reduced motion — disable entrance animations */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
