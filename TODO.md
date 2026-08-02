@@ -53,6 +53,17 @@
 - [x] Added `-webkit-overflow-scrolling: touch` and `scroll-behavior: smooth` for smooth scrolling
 - [x] Lighter card hover transitions (300ms instead of 500ms) for snappier feel
 
+## Navigation UX Improvements
+- [x] Logo link opens `/events` (logged in) or `/auth/login` (logged out) — app opens on login page
+- [x] Login/Sign Up buttons disappear entirely after login, replaced by user avatar + name
+- [x] "My Tickets" button always visible (gold bordered) — clickable to view your tickets
+- [x] "Organizer" button always visible (for organizers) — quick access to organizer dashboard
+- [x] User dropdown shows name + role above the avatar, easy access to all dashboards
+- [x] Ticket stubs in attendee wallet are now clickable — navigate to `/tickets/[id]` for full view
+- [x] "Become Organizer" link shown for attendees (non-organizers)
+- [x] Mobile: sidebar includes "My Tickets" quick link, scrollable overflow menu, responsive padding
+- [x] Sign Out redirects to `/auth/login` instead of homepage
+
 ## Verification
 - [x] All route pages converted to Midnight Luxe theme (public, auth, dashboards, secondary)
 - [x] Components (Navigation, Button, Card, Input, AdvancedSearch, PaystackButton) redesigned

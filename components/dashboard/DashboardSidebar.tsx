@@ -144,7 +144,7 @@ export function DashboardSidebar({ role, userName }: DashboardSidebarProps) {
         {sidebarContent}
       </aside>
 
-      {/* Mobile topbar */}
+{/* Mobile topbar */}
       <div className="lg:hidden glass-dark border-b border-gold/10 sticky top-0 z-50">
         <div className="flex items-center justify-between px-4 py-3">
 <Link href="/" className="flex items-center gap-2">
@@ -157,15 +157,25 @@ export function DashboardSidebar({ role, userName }: DashboardSidebarProps) {
             </div>
             <span className="font-display font-bold gradient-text">TicketHub</span>
           </Link>
-          <button
-            onClick={() => setOpen(!open)}
-            className="p-2 text-ivory/70 hover:text-gold transition-colors"
-          >
-            {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          <div className="flex items-center gap-2">
+            {/* My Tickets quick link on mobile */}
+            <Link
+              href="/dashboard/attendee"
+              className="flex items-center gap-1 px-2 py-1.5 text-xs text-gold border border-gold/20 rounded-lg hover:bg-gold/10"
+            >
+              <Ticket className="w-3.5 h-3.5" />
+              <span className="hidden xs:inline">Tickets</span>
+            </Link>
+            <button
+              onClick={() => setOpen(!open)}
+              className="p-2 text-ivory/70 hover:text-gold transition-colors"
+            >
+              {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
         {open && (
-          <div className="px-4 pb-4 animate-fade-in-down">
+          <div className="px-4 pb-4 animate-fade-in-down max-h-[80vh] overflow-y-auto">
             {sidebarContent}
           </div>
         )}

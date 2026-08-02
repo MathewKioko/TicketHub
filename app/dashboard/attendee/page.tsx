@@ -305,7 +305,7 @@ export default function AttendeeDashboard() {
   )
 }
 
-// Horizontal Ticket Stub Card with perforated divider
+// Horizontal Ticket Stub Card with perforated divider — clickable to view full ticket
 function TicketStub({ ticket, index, copiedId, onCopy, onDownload, onCalendar }: {
   ticket: Ticket
   index: number
@@ -314,9 +314,13 @@ function TicketStub({ ticket, index, copiedId, onCopy, onDownload, onCalendar }:
   onDownload: (ticket: Ticket) => void
   onCalendar: (ticket: Ticket) => void
 }) {
+  const router = useRouter()
   return (
     <div>
-      <div className="luxe-card rounded-3xl overflow-hidden hover:scale-[1.01] transition-all duration-500 card-hover group flex flex-col md:flex-row">
+      <div
+        onClick={() => router.push(`/tickets/${ticket.id}`)}
+        className="luxe-card rounded-3xl overflow-hidden hover:scale-[1.01] transition-all duration-500 card-hover group flex flex-col md:flex-row cursor-pointer"
+      >
         {/* Left — event details */}
         <div className="flex-1 p-6 md:p-8">
           <div className="flex items-start justify-between mb-4">
