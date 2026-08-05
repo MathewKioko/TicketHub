@@ -7,6 +7,7 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
+    serverComponentsExternalPackages: ['@react-pdf/renderer', 'resend'],
   },
 }
 

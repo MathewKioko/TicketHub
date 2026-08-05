@@ -115,6 +115,31 @@ Full steps in [GOOGLE_OAUTH_SETUP.md](GOOGLE_OAUTH_SETUP.md).
 
 ---
 
+### 7. Resend Email (Ticket confirmation emails + PDF delivery)
+| Variable | Needed | Where to get it |
+|---|---|---|
+| `RESEND_API_KEY` | Optional (graceful fallback) | [Resend](https://resend.com) → free account → API Keys |
+| `EMAIL_FROM` | Optional | Defaults to `TicketHub <onboarding@resend.dev>`; set to your verified domain e.g. `TicketHub <no-reply@tickethubke.app>` |
+
+**How it works:**
+- When a Paystack payment is verified (via `verify` or `webhook`), TicketHub sends a branded **ticket confirmation email** with a downloadable **PDF ticket** (gold "Midnight Luxe" design) attached.
+- If `RESEND_API_KEY` is **not** set, the app **gracefully logs** the email to the console instead of crashing — the ticket still confirms in the database.
+- To activate real delivery, add your key and a verified Resend domain.
+
+**Testing locally without hitting rate limits:**
+- Resend's free plan includes 100 emails/day and `onboarding@resend.dev` for testing.
+- You can verify sends appear in the Resend dashboard "Logs" tab.
+
+**✅ Production settings already confirmed for ticketHub (domain `tickethubke.app` verified):**
+```env
+# Set RESEND_API_KEY in your hosting provider's environment variables (never commit it).
+EMAIL_FROM=TicketHub <no-reply@tickethubke.app>
+```
+
+> Security note: never commit your `RESEND_API_KEY` to the repository. Set it in your hosting provider's environment variables (e.g. Vercel → Project → Settings → Environment Variables) and in your local `.env` file, which is git-ignored.
+
+---
+
 ## Complete `.env` template
 
 ```env

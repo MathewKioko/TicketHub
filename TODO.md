@@ -64,11 +64,28 @@
 - [x] Mobile: sidebar includes "My Tickets" quick link, scrollable overflow menu, responsive padding
 - [x] Sign Out redirects to `/auth/login` instead of homepage
 
+## Phase 8 — Premium Ticket Delivery & Verification
+- [x] lib/scan.ts: shared scan-validation logic (exists, confirmed, event-match, already-used, expired, cancelled)
+- [x] lib/ticket-pdf.ts: branded Midnight Luxe PDF ticket generator (@react-pdf/renderer)
+- [x] lib/emails.ts: rewrite with Resend — send ticket confirmation with PDF attachment
+- [x] app/api/tickets/scan/route.ts: allow ORGANIZER/EVENT_OWNER/SCANNER/ADMIN, require eventId, return validation reasons
+- [x] app/scanner/page.tsx: real camera QR scanning via jsQR + event picker
+- [x] components/scanner/ScannerCamera.tsx: reusable camera + jsQR decoding component
+- [x] app/api/paystack/verify/[reference]/route.ts: send confirmation email with PDF on confirm
+- [x] app/api/paystack/webhook/route.ts: send confirmation email with PDF on confirm
+- [x] app/dashboard/organizer/page.tsx: add "Scan Tickets" quick action passing event
+- [x] docs/ENV_SETUP_GUIDE.md: document RESEND_API_KEY + EMAIL_FROM
+- [x] scripts/diagnose-env.js: check RESEND_API_KEY + EMAIL_FROM
+
 ## Verification
 - [x] All route pages converted to Midnight Luxe theme (public, auth, dashboards, secondary)
 - [x] Components (Navigation, Button, Card, Input, AdvancedSearch, PaystackButton) redesigned
 - [x] No duplicate navbar on homepage — global Navigation used via layout
+- [x] Added @react-pdf/renderer, resend, jsqr to package.json + next.config serverComponentsExternalPackages
+- [x] Fixed scan route to not pass user.id as scannerId (Scanner is a separate model) — audit log records the user
+- [x] Fixed pdfBuffer Uint8Array type consistency in ticket-email.ts
 - [ ] Run `npm install` and `npm run dev` to verify all routes render with the new theme (requires dependencies)
+- [ ] Add RESEND_API_KEY to .env for real email delivery
 
 ## Run Instructions (terminal failed to launch in agent)
 The VSCode terminal could not be launched by the agent (conpty/winpty issue),

@@ -21,6 +21,8 @@ async function main() {
   check('PAYSTACK_SECRET_KEY', process.env.PAYSTACK_SECRET_KEY)
   check('PAYSTACK_PUBLIC_KEY', process.env.PAYSTACK_PUBLIC_KEY)
   check('NEXT_PUBLIC_APP_URL', process.env.NEXT_PUBLIC_APP_URL, true)
+  check('RESEND_API_KEY', process.env.RESEND_API_KEY)
+  check('EMAIL_FROM', process.env.EMAIL_FROM, true)
 
   console.log('\n=== MONGODB CONNECTION TEST ===')
   if (!process.env.DATABASE_URL) {
@@ -59,4 +61,3 @@ async function main() {
 }
 
 main().finally(() => process.exit(0))
-

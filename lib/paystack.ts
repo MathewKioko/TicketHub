@@ -85,63 +85,82 @@ export async function initializePayment({
     reference: generatedReference,
     callback_url: callbackUrl,
     metadata: paymentMetadata,
-    channels: ['mobile_money', 'card', 'bank', 'ussd'],
+    channels: ['card', 'mobile_money'],
   }
 
-  try {
-    const config: AxiosRequestConfig = {
-      method: 'POST',
-      url: `${PAYSTACK_BASE_URL}/transaction/initialize`,
-      headers: {
-        Authorization: `Bearer ${assertEnvVar(PAYSTACK_SECRET_KEY, 'PAYSTACK_SECRET_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      data: payload,
-      timeout: 30000,
-    }
+  // Retry configuration for transient network/API issues
+  const MAX_ATTEMPTS = 3
+  const RETRY_DELAY_MS = 1500
 
-    const response = await axios.request<{
-      status: boolean
-      message: string
-      data: {
-        reference: string
-        authorization_url: string
-        access_code: string
+  let lastError: any = null
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const config: AxiosRequestConfig = {
+        method: 'POST',
+        url: `${PAYSTACK_BASE_URL}/transaction/initialize`,
+        headers: {
+          Authorization: `Bearer ${assertEnvVar(PAYSTACK_SECRET_KEY, 'PAYSTACK_SECRET_KEY')}`,
+          'Content-Type': 'application/json',
+        },
+        data: payload,
+        timeout: 25000,
       }
-    }>(config)
 
-    if (response.data.status) {
-      return {
-        success: true,
-        reference: response.data.data.reference,
-        authorizationUrl: response.data.data.authorization_url,
-        accessCode: response.data.data.access_code,
-      }
-    } else {
-      throw new Error(response.data.message || 'Failed to initialize payment')
-    }
-  } catch (error: any) {
-    console.error('Paystack initialize error:', error.response?.data || error.message)
-    
-    if (error.response) {
-      const status = error.response.status
-      const data = error.response.data
+      const response = await axios.request<{
+        status: boolean
+        message: string
+        data: {
+          reference: string
+          authorization_url: string
+          access_code: string
+        }
+      }>(config)
 
-      if (status === 401) {
-        throw new Error('Invalid Paystack API credentials')
-      } else if (status === 400) {
-        throw new Error(data.message || 'Invalid payment request')
-      } else if (status === 422) {
-        throw new Error(data.message || 'Validation error')
+      if (response.data.status) {
+        return {
+          success: true,
+          reference: response.data.data.reference,
+          authorizationUrl: response.data.data.authorization_url,
+          accessCode: response.data.data.access_code,
+        }
       } else {
-        throw new Error(`Paystack API error: ${data.message || error.message}`)
+        throw new Error(response.data.message || 'Failed to initialize payment')
       }
-    } else if (error.request) {
-      throw new Error('Paystack API request timeout. Please check your connection')
-    } else {
-      throw new Error(`Paystack initialization error: ${error.message}`)
+    } catch (error: any) {
+      lastError = error
+      console.error(`Paystack initialize attempt ${attempt}/${MAX_ATTEMPTS} failed:`, error.response?.data || error.message)
+
+      // Do not retry on definitive client errors (bad credentials, invalid request)
+      if (error.response) {
+        const status = error.response.status
+        const data = error.response.data
+
+        if (status === 401) {
+          throw new Error('Invalid Paystack API credentials. Check your PAYSTACK_SECRET_KEY.')
+        } else if (status === 400) {
+          throw new Error(data.message || 'Invalid payment request')
+        } else if (status === 422) {
+          throw new Error(data.message || 'Validation error')
+        } else {
+          throw new Error(`Paystack API error: ${data.message || error.message}`)
+        }
+      }
+
+      // Network/timeout errors — retry after a short delay
+      if (attempt < MAX_ATTEMPTS) {
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS * attempt))
+      }
     }
   }
+
+  // All attempts exhausted
+  if (lastError?.code === 'ECONNREFUSED' || lastError?.code === 'ENOTFOUND') {
+    throw new Error('Could not reach Paystack. Check your internet connection and firewall.')
+  }
+  throw new Error(
+    'Paystack did not respond after multiple attempts. Please check your internet connection and try again.'
+  )
 }
 
 // Verify Payment Request Types
@@ -179,92 +198,111 @@ export async function verifyPayment({ reference }: VerifyPaymentParams): Promise
     throw new Error('Reference is required')
   }
 
-  // Validate reference format for security
+// Validate reference format for security
   if (!isValidTicketReference(reference)) {
     throw new Error('Invalid reference format')
   }
 
-  try {
-    const config: AxiosRequestConfig = {
-      method: 'GET',
-      url: `${PAYSTACK_BASE_URL}/transaction/verify/${encodeURIComponent(reference)}`,
-      headers: {
-        Authorization: `Bearer ${assertEnvVar(PAYSTACK_SECRET_KEY, 'PAYSTACK_SECRET_KEY')}`,
-      },
-      timeout: 30000,
-    }
+  // Retry configuration for transient network/API timeouts.
+  const MAX_ATTEMPTS = 3
+  const RETRY_DELAY_MS = 1500
 
-    const response = await axios.request<{
-      status: boolean
-      message: string
-      data: {
-        id: number
-        reference: string
-        amount: number
-        currency: string
-        status: string
-        metadata: Record<string, any>
-        customer: {
-          email: string
-          phone: string
-        }
-        authorization: {
-          bank: string
-          card_type: string
-          last4: string
-        }
+  let lastError: any = null
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const config: AxiosRequestConfig = {
+        method: 'GET',
+        url: `${PAYSTACK_BASE_URL}/transaction/verify/${encodeURIComponent(reference)}`,
+        headers: {
+          Authorization: `Bearer ${assertEnvVar(PAYSTACK_SECRET_KEY, 'PAYSTACK_SECRET_KEY')}`,
+        },
+        timeout: 30000,
       }
-    }>(config)
 
-    if (response.data.status) {
-      const data = response.data.data
-      
-      return {
-        success: true,
-        verified: data.status === 'success',
-        status: data.status,
-        amount: data.amount,
-        currency: data.currency,
-        reference: data.reference,
-        metadata: {
-          app: data.metadata?.app,
-          eventId: data.metadata?.eventId,
-          userId: data.metadata?.userId,
-          ticketIds: data.metadata?.ticketIds,
-        },
-        customer: {
-          email: data.customer.email,
-          phone: data.customer.phone,
-        },
-        authorization: {
-          bank: data.authorization?.bank,
-          cardType: data.authorization?.card_type,
-          last4: data.authorization?.last4,
-        },
-      }
-    } else {
-      throw new Error(response.data.message || 'Verification failed')
-    }
-  } catch (error: any) {
-    console.error('Paystack verify error:', error.response?.data || error.message)
-    
-    if (error.response) {
-      const status = error.response.status
-      const data = error.response.data
+      const response = await axios.request<{
+        status: boolean
+        message: string
+        data: {
+          id: number
+          reference: string
+          amount: number
+          currency: string
+          status: string
+          metadata: Record<string, any>
+          customer: {
+            email: string
+            phone: string
+          }
+          authorization: {
+            bank: string
+            card_type: string
+            last4: string
+          }
+        }
+      }>(config)
 
-      if (status === 404) {
-        throw new Error('Transaction not found')
-      } else if (status === 401) {
-        throw new Error('Invalid Paystack API credentials')
+      if (response.data.status) {
+        const data = response.data.data
+
+        return {
+          success: true,
+          verified: data.status === 'success',
+          status: data.status,
+          amount: data.amount,
+          currency: data.currency,
+          reference: data.reference,
+          metadata: {
+            app: data.metadata?.app,
+            eventId: data.metadata?.eventId,
+            userId: data.metadata?.userId,
+            ticketIds: data.metadata?.ticketIds,
+          },
+          customer: {
+            email: data.customer.email,
+            phone: data.customer.phone,
+          },
+          authorization: {
+            bank: data.authorization?.bank,
+            cardType: data.authorization?.card_type,
+            last4: data.authorization?.last4,
+          },
+        }
       } else {
-        throw new Error(`Paystack API error: ${data.message || error.message}`)
+        throw new Error(response.data.message || 'Verification failed')
       }
-    } else if (error.request) {
-      throw new Error('Paystack API request timeout')
-    } else {
-      throw new Error(`Paystack verification error: ${error.message}`)
+    } catch (error: any) {
+      lastError = error
+
+      // Definitive client errors — do not retry.
+      if (error.response) {
+        const status = error.response.status
+        const data = error.response.data
+
+        if (status === 404) {
+          throw new Error('Transaction not found')
+        } else if (status === 401) {
+          throw new Error('Invalid Paystack API credentials')
+        } else {
+          throw new Error(`Paystack API error: ${data.message || error.message}`)
+        }
+      }
+
+      // Network/timeout errors — retry after a short delay.
+      console.error(`Paystack verify attempt ${attempt}/${MAX_ATTEMPTS} failed:`, error.message)
+      if (attempt < MAX_ATTEMPTS) {
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS * attempt))
+      }
     }
   }
+
+  // All attempts exhausted with non-HTTP errors.
+  if (lastError?.code === 'ECONNREFUSED' || lastError?.code === 'ENOTFOUND') {
+    throw new Error('Could not reach Paystack. Check your internet connection and firewall.')
+  }
+  throw new Error(
+    'Paystack did not respond after multiple attempts. Please check your internet connection and try again.'
+  )
 }
 
 // Webhook Event Types

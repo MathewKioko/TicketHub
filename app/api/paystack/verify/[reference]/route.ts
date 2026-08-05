@@ -56,9 +56,20 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // Check if already confirmed (idempotent)
+// Check if already confirmed (idempotent)
     const firstTicket = tickets[0]
     if (firstTicket.status === 'CONFIRMED' || firstTicket.status === 'CHECKED_IN') {
+      // Ensure the confirmation email is sent even if it was skipped earlier
+      // (e.g. the ticket was marked CONFIRMED by the webhook or a prior verify
+      // that failed mid-flight before the email block ran).
+      try {
+        const { sendTicketsForReference } = await import('@/lib/ticket-email')
+        // sendTicketsForReference is idempotent-safe on CONFIRMED tickets.
+        await sendTicketsForReference(reference)
+      } catch (emailError) {
+        console.warn('Email confirmation skipped (already-confirmed path):', emailError)
+      }
+
       return NextResponse.json({
         success: true,
         verified: true,
@@ -110,7 +121,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Update tickets atomically to CONFIRMED
-    await prisma.ticket.updateMany({
+    const updateResult = await prisma.ticket.updateMany({
       where: {
         paystackReference: reference,
         status: 'PENDING', // Only update pending tickets
@@ -137,6 +148,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         },
       },
     })
+
+    // Send confirmation email with branded PDF ticket (non-blocking, never throws)
+    if (updateResult.count > 0) {
+      try {
+        const { sendTicketsForReference } = await import('@/lib/ticket-email')
+        await sendTicketsForReference(reference)
+      } catch (emailError) {
+        console.warn('Email confirmation skipped (verification route):', emailError)
+      }
+    }
 
     // Emit real-time update
     try {

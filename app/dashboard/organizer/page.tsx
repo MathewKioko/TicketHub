@@ -222,10 +222,10 @@ export default function OrganizerDashboard() {
             )}
           </div>
 
-          {/* Quick Actions */}
+{/* Quick Actions */}
           <Card variant="elevated">
             <h2 className="font-display text-2xl font-bold text-ivory mb-6">Quick Actions</h2>
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-4 gap-4">
               <Link href="/events/create">
                 <Button variant="outline" className="w-full justify-start">
                   <Plus className="w-5 h-5 mr-2" />
@@ -238,6 +238,14 @@ export default function OrganizerDashboard() {
                   Scanner App
                 </Button>
               </Link>
+              {events.length > 0 && (
+                <Link href={`/events/${events[0].id}/manage`}>
+                  <Button variant="outline" className="w-full justify-start">
+                    <Ticket className="w-5 h-5 mr-2" />
+                    Manage Top Event
+                  </Button>
+                </Link>
+              )}
               <Link href="/dashboard/organizer/settings">
                 <Button variant="outline" className="w-full justify-start">
                   <Settings className="w-5 h-5 mr-2" />
@@ -246,6 +254,25 @@ export default function OrganizerDashboard() {
               </Link>
             </div>
           </Card>
+
+          {/* Scan per-event quick links */}
+          {events.length > 0 && (
+            <div className="mt-6">
+              <h3 className="font-display text-lg font-bold text-ivory mb-4">Scan Tickets by Event</h3>
+              <div className="flex flex-wrap gap-3">
+                {events.slice(0, 6).map((event) => (
+                  <Link
+                    key={event.id}
+                    href={`/scanner?eventId=${event.id}`}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gold/5 border border-gold/20 text-ivory/80 hover:bg-gold/10 hover:border-gold/40 hover:text-gold transition-all text-sm"
+                  >
+                    <BarChart3 className="w-4 h-4 text-gold/70" />
+                    {event.title.length > 24 ? `${event.title.slice(0, 24)}…` : event.title}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>

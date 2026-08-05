@@ -130,6 +130,14 @@ export async function POST(request: NextRequest) {
         updatedCount: updateResult.count,
       })
 
+      // Send confirmation email with branded PDF ticket (non-blocking, never throws)
+      try {
+        const { sendTicketsForReference } = await import('@/lib/ticket-email')
+        await sendTicketsForReference(reference)
+      } catch (emailError) {
+        console.warn('Email confirmation skipped (webhook route):', emailError)
+      }
+
       // Emit real-time update
       try {
         const tickets = await prisma.ticket.findMany({
