@@ -178,9 +178,9 @@ export async function generateTicketPdfBuffer(data: PdfTicketData): Promise<Buff
     const TicketDoc = React.createElement(
       Document,
       null,
-      React.createElement(
+React.createElement(
         Page,
-        { size: 'TICKET', style: styles.page },
+        { size: [340, 560], style: styles.page },
         React.createElement(
           View,
           { style: styles.card },
