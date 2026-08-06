@@ -13,11 +13,12 @@
 export type EmailTemplate =
   | 'ticket_confirmation'
   | 'payment_receipt'
-  | 'event_reminder'
+| 'event_reminder'
   | 'ticket_refund'
   | 'payout_processed'
   | 'event_cancelled'
   | 'account_verification'
+  | 'password_reset'
 
 type EmailData = {
   ticketConfirmation?: {
@@ -293,6 +294,17 @@ TicketHub Kenya • Powered by Paystack
       }
     }
 
+    case 'password_reset': {
+      const v = data.verification!
+      const primary = '#D4AF7A'
+      const dark = '#0A0A0B'
+      const body = '#F5F1E8'
+      const muted = '#8A8578'
+      const html = `<div style="background:${dark};padding:24px;color:${body};font-family:Arial,sans-serif;"><div style="max-width:520px;margin:auto;border:1px solid ${primary}55;border-radius:16px;padding:24px;"><div style="text-align:center;font-size:22px;font-weight:800;color:${primary};letter-spacing:1px;">TICKETHUB</div><h2 style="color:${body};text-align:center;">Reset Your Password</h2><p style="color:${muted};text-align:center;">Hi ${v.name},<br/>We received a request to reset your password. Click the button below to set a new one.</p><div style="text-align:center;margin:24px 0;"><a href="${v.verificationUrl}" style="display:inline-block;background:linear-gradient(135deg,#E8C990,#D4AF7A 45%,#B08D57);color:#0A0A0B;text-decoration:none;padding:13px 26px;border-radius:12px;font-weight:700;font-size:14px;">Reset Password</a></div><p style="color:${muted};text-align:center;font-size:12px;">This link expires in 1 hour. If you didn't request this, you can safely ignore this email.</p></div></div>`
+      const text = `Reset Your Password\n\nHi ${v.name},\n\nWe received a request to reset your password. Click the link below to set a new one:\n\n${v.verificationUrl}\n\nThis link expires in 1 hour. If you didn't request this, you can safely ignore this email.`
+      return { html, text }
+    }
+
     default:
       return {
         html: `<div style="background:#0A0A0B;padding:24px;color:#F5F1E8;font-family:Arial,sans-serif;text-align:center;"><h2 style="color:#D4AF7A;">TicketHub</h2><p>${getDefaultSubject(template)}</p></div>`,
@@ -315,8 +327,10 @@ function getDefaultSubject(template: EmailTemplate): string {
       return '💵 Payout Processed'
     case 'event_cancelled':
       return '⚠️ Event Cancelled'
-    case 'account_verification':
+case 'account_verification':
       return '✓ Verify Your Account'
+    case 'password_reset':
+      return '🔑 Reset Your Password'
     default:
       return 'TicketHub Notification'
   }
@@ -383,5 +397,14 @@ export async function sendVerificationEmail(
   return sendEmail(to, 'account_verification', {
     verification: data,
   }, '✓ Verify Your Account')
+}
+
+export async function sendPasswordResetEmail(
+  to: string,
+  data: EmailData['verification']
+) {
+  return sendEmail(to, 'password_reset', {
+    verification: data,
+  }, '🔑 Reset Your Password')
 }
 

@@ -297,6 +297,12 @@ const EventCard = memo(({ event, index }: { event: Event; index: number }) => {
               <span className="text-[10px] text-taupe">by {event.organizer.name}</span>
               <span className="text-[10px] text-ivory/50">{event._count.tickets} sold</span>
             </div>
+            <div className="mt-3">
+              <span className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-gradient-to-r from-gold-light via-gold to-gold-dark text-onyx text-sm font-semibold hover:shadow-glow-lg hover:scale-[1.02] transition-all duration-200 group-hover:shadow-glow-lg">
+                Buy Tickets
+                <ArrowRight className="w-4 h-4" />
+              </span>
+            </div>
           </div>
         </div>
       </Link>
