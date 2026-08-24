@@ -5,38 +5,39 @@ import { logAuditAction } from '@/lib/auth'
 import { headers } from 'next/headers'
 
 const verifySchema = z.object({
-  token: z.string(),
+  code: z.string().length(6),
 })
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { token } = verifySchema.parse(body)
+    const { code } = verifySchema.parse(body)
 
-    // Find user with valid verification token
+    // Find user with a valid (non-expired) OTP
     const user = await prisma.user.findFirst({
       where: {
-        verificationToken: token,
-        verificationExpires: {
+        otp: code,
+        otpExpires: {
           gt: new Date(),
         },
+        verified: false,
       },
     })
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Invalid or expired verification token' },
+        { error: 'Invalid or expired verification code' },
         { status: 400 }
       )
     }
 
-    // Update user as verified
+    // Update user as verified and clear OTP
     await prisma.user.update({
       where: { id: user.id },
       data: {
         verified: true,
-        verificationToken: null,
-        verificationExpires: null,
+        otp: null,
+        otpExpires: null,
       },
     })
 

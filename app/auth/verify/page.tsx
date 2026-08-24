@@ -1,19 +1,73 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef, KeyboardEvent, ClipboardEvent, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Sparkles, ShieldCheck, CheckCircle, Star, Lock } from 'lucide-react'
 
+const CODE_LENGTH = 6
+
 export default function VerifyPage() {
-  const [token, setToken] = useState('')
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-onyx flex items-center justify-center"><div className="text-taupe">Loading...</div></div>}>
+      <VerifyContent />
+    </Suspense>
+  )
+}
+
+function VerifyContent() {
+  const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(''))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
   const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    inputRefs.current[0]?.focus()
+  }, [])
+
+  const handleChange = (index: number, value: string) => {
+    const digit = value.replace(/\D/g, '').slice(-1)
+    const newCode = [...code]
+    newCode[index] = digit
+    setCode(newCode)
+
+    if (digit && index < CODE_LENGTH - 1) {
+      inputRefs.current[index + 1]?.focus()
+    }
+
+    if (digit && newCode.every((d) => d !== '')) {
+      handleVerify(newCode.join(''))
+    }
+  }
+
+  const handleKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !code[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus()
+    }
+  }
+
+  const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault()
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, CODE_LENGTH)
+    if (!pasted) return
+
+    const newCode = Array(CODE_LENGTH).fill('')
+    for (let i = 0; i < pasted.length; i++) {
+      newCode[i] = pasted[i]
+    }
+    setCode(newCode)
+
+    const nextIndex = Math.min(pasted.length, CODE_LENGTH - 1)
+    inputRefs.current[nextIndex]?.focus()
+
+    if (pasted.length === CODE_LENGTH) {
+      handleVerify(pasted)
+    }
+  }
+
+  const handleVerify = async (verifyCode: string) => {
     setLoading(true)
     setError('')
     setSuccess('')
@@ -22,7 +76,7 @@ export default function VerifyPage() {
       const response = await fetch('/api/auth/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ code: verifyCode }),
       })
 
       const data = await response.json()
@@ -34,12 +88,24 @@ export default function VerifyPage() {
         }, 2000)
       } else {
         setError(data.error || 'Verification failed')
+        setCode(Array(CODE_LENGTH).fill(''))
+        inputRefs.current[0]?.focus()
       }
     } catch (err) {
       setError('Network error. Please try again.')
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const verifyCode = code.join('')
+    if (verifyCode.length !== CODE_LENGTH) {
+      setError('Please enter the full 6-digit code')
+      return
+    }
+    await handleVerify(verifyCode)
   }
 
   return (
@@ -80,7 +146,7 @@ export default function VerifyPage() {
             <span className="gradient-text italic">your access</span>
           </h1>
           <p className="text-lg text-taupe max-w-md font-light leading-relaxed mb-12">
-            Confirm your identity to start exploring the extraordinary. Your account is nearly ready.
+            Enter the 6-digit code we sent to your email to activate your account.
           </p>
 
           {/* Trust badge */}
@@ -91,7 +157,7 @@ export default function VerifyPage() {
               </div>
               <div>
                 <p className="font-semibold text-ivory">Secure Verification</p>
-                <p className="text-sm text-taupe font-light">Your token is encrypted and private</p>
+                <p className="text-sm text-taupe font-light">Your code is valid for 10 minutes</p>
               </div>
             </div>
           </div>
@@ -110,7 +176,7 @@ export default function VerifyPage() {
 
         <div className="max-w-md w-full glass-luxe rounded-2xl p-8 md:p-10 relative z-10 animate-fade-in-up">
           <div className="text-center mb-10">
-<Link href="/" className="inline-flex items-center gap-2.5 mb-6 group lg:hidden">
+            <Link href="/" className="inline-flex items-center gap-2.5 mb-6 group lg:hidden">
               <div className="relative w-12 h-12">
                 <div className="absolute inset-0 bg-gold/20 rounded-xl blur-sm" />
                 <div className="relative w-full h-full flex items-center justify-center group-hover:scale-105 transition-transform">
@@ -126,8 +192,8 @@ export default function VerifyPage() {
             <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-gold/20 to-gold-dark/20 border border-gold/30 flex items-center justify-center shadow-glow">
               <Lock className="w-7 h-7 text-gold" />
             </div>
-            <h1 className="font-display text-3xl font-bold text-ivory mb-2">Verify Your Account</h1>
-            <p className="text-taupe">Enter your verification token</p>
+            <h1 className="font-display text-3xl font-bold text-ivory mb-2">Check Your Email</h1>
+            <p className="text-taupe">We sent a 6-digit verification code to your email</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -147,23 +213,30 @@ export default function VerifyPage() {
             )}
 
             <div>
-              <label htmlFor="token" className="block text-sm font-medium text-ivory/70 mb-2">
-                Verification Token
+              <label htmlFor="code-0" className="block text-sm font-medium text-ivory/70 mb-3">
+                Verification Code
               </label>
-              <div className="relative">
-                <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-taupe/50" />
-                <input
-                  type="text"
-                  id="token"
-                  value={token}
-                  onChange={(e) => setToken(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 bg-coal/70 border border-white/10 rounded-xl text-ivory placeholder-taupe/50 focus:border-gold/40 focus:outline-none focus:ring-2 focus:ring-gold/20 transition-all duration-200"
-                  placeholder="Enter your verification token"
-                  required
-                />
+              <div className="flex gap-2 sm:gap-3 justify-between">
+                {code.map((digit, index) => (
+                  <input
+                    key={index}
+                    id={index === 0 ? 'code-0' : undefined}
+                    ref={(el) => { inputRefs.current[index] = el }}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleChange(index, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(index, e)}
+                    onPaste={index === 0 ? handlePaste : undefined}
+                    disabled={loading}
+                    className="w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl font-bold bg-coal/70 border border-white/10 rounded-xl text-ivory placeholder-taupe/50 focus:border-gold/40 focus:outline-none focus:ring-2 focus:ring-gold/20 transition-all duration-200 disabled:opacity-50"
+                  />
+                ))}
               </div>
-              <p className="text-xs text-taupe mt-2">
-                Check your signup confirmation or console for the token
+              <p className="text-xs text-taupe mt-3">
+                Enter the 6-digit code from your email. It expires in 10 minutes.
               </p>
             </div>
 
@@ -192,4 +265,3 @@ export default function VerifyPage() {
     </div>
   )
 }
-

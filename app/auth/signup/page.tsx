@@ -12,10 +12,9 @@ export default function SignupPage() {
     password: '',
     phone: '',
   })
-  const [loading, setLoading] = useState(false)
+const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [verificationToken, setVerificationToken] = useState('')
   const router = useRouter()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,9 +39,8 @@ export default function SignupPage() {
 
       const data = await response.json()
 
-      if (response.ok) {
-        setSuccess('Registration successful! Use the verification token below to verify your account.')
-        setVerificationToken(data.verificationToken || '')
+if (response.ok) {
+        setSuccess('Registration successful! Check your email for a verification code.')
       } else {
         setError(data.error || 'Registration failed')
       }
@@ -155,24 +153,19 @@ export default function SignupPage() {
               </div>
             )}
 
-            {success && (
+{success && (
               <div className="bg-gold/10 border border-gold/30 text-gold-light px-4 py-3 rounded-xl text-sm animate-fade-in">
                 <div className="flex items-center gap-2 mb-2">
                   <CheckCircle className="w-5 h-5" />
                   <span className="font-semibold">Registration Successful!</span>
                 </div>
                 <p className="text-ivory/80 text-xs">{success}</p>
-                {verificationToken && (
-                  <div className="mt-3 p-3 bg-coal/70 rounded-lg border border-white/10">
-                    <p className="text-xs font-medium text-taupe mb-1">Verification Token:</p>
-                    <code className="text-sm text-gold bg-onyx px-2 py-1.5 rounded block break-all">
-                      {verificationToken}
-                    </code>
-                    <Link href="/auth/verify" className="text-xs mt-2 text-gold hover:text-gold-light underline block">
-                      Click here to verify your account →
-                    </Link>
-                  </div>
-                )}
+                <p className="text-ivory/60 text-xs mt-2">
+                  We've sent a 6-digit verification code to <span className="text-gold font-medium">{formData.email}</span>. Enter the code to activate your account.
+                </p>
+                <Link href="/auth/verify" className="text-xs mt-2 text-gold hover:text-gold-light underline block">
+                  Didn't get the email? Click here to enter your code →
+                </Link>
               </div>
             )}
 

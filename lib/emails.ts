@@ -18,6 +18,7 @@ export type EmailTemplate =
   | 'payout_processed'
   | 'event_cancelled'
   | 'account_verification'
+  | 'account_verification_code'
   | 'password_reset'
 
 type EmailData = {
@@ -68,6 +69,10 @@ type EmailData = {
   verification?: {
     name: string
     verificationUrl: string
+  }
+  verificationCode?: {
+    name: string
+    code: string
   }
 }
 
@@ -294,6 +299,28 @@ TicketHub Kenya • Powered by Paystack
       }
     }
 
+    case 'account_verification': {
+      const v = data.verification!
+      const primary = '#D4AF7A'
+      const dark = '#0A0A0B'
+      const body = '#F5F1E8'
+      const muted = '#8A8578'
+      const html = `<div style="background:${dark};padding:24px;color:${body};font-family:Arial,sans-serif;"><div style="max-width:520px;margin:auto;border:1px solid ${primary}55;border-radius:16px;padding:24px;"><div style="text-align:center;font-size:22px;font-weight:800;color:${primary};letter-spacing:1px;">TICKETHUB</div><h2 style="color:${body};text-align:center;">Verify Your Email</h2><p style="color:${muted};text-align:center;">Hi ${v.name},<br/>Welcome to TicketHub! Use the code below to activate your account.</p><div style="text-align:center;margin:28px 0;"><div style="display:inline-block;background:${dark};border:2px solid ${primary};border-radius:14px;padding:18px 32px;letter-spacing:10px;font-size:32px;font-weight:800;color:${primary};">${v.verificationUrl.slice(-6)}</div></div><p style="color:${muted};text-align:center;font-size:12px;">This code expires in 10 minutes. If you didn't create an account, you can safely ignore this email.</p></div></div>`
+      const text = `Verify Your Email\n\nHi ${v.name},\n\nWelcome to TicketHub! Use the code below to activate your account.\n\n${v.verificationUrl}\n\nThis code expires in 10 minutes. If you didn't create an account, you can safely ignore this email.`
+      return { html, text }
+    }
+
+    case 'account_verification_code': {
+      const v = data.verificationCode!
+      const primary = '#D4AF7A'
+      const dark = '#0A0A0B'
+      const body = '#F5F1E8'
+      const muted = '#8A8578'
+      const html = `<div style="background:${dark};padding:24px;color:${body};font-family:Arial,sans-serif;"><div style="max-width:520px;margin:auto;border:1px solid ${primary}55;border-radius:16px;padding:24px;"><div style="text-align:center;font-size:22px;font-weight:800;color:${primary};letter-spacing:1px;">TICKETHUB</div><h2 style="color:${body};text-align:center;">Verify Your Email</h2><p style="color:${muted};text-align:center;">Hi ${v.name},<br/>Welcome to TicketHub! Use the code below to activate your account.</p><div style="text-align:center;margin:28px 0;"><div style="display:inline-block;background:${dark};border:2px solid ${primary};border-radius:14px;padding:18px 32px;letter-spacing:10px;font-size:32px;font-weight:800;color:${primary};">${v.code}</div></div><p style="color:${muted};text-align:center;font-size:12px;">This code expires in 10 minutes. If you didn't create an account, you can safely ignore this email.</p></div></div>`
+      const text = `Verify Your Email\n\nHi ${v.name},\n\nWelcome to TicketHub! Use the code below to activate your account.\n\nYour code: ${v.code}\n\nThis code expires in 10 minutes. If you didn't create an account, you can safely ignore this email.`
+      return { html, text }
+    }
+
     case 'password_reset': {
       const v = data.verification!
       const primary = '#D4AF7A'
@@ -327,8 +354,10 @@ function getDefaultSubject(template: EmailTemplate): string {
       return '💵 Payout Processed'
     case 'event_cancelled':
       return '⚠️ Event Cancelled'
-case 'account_verification':
+    case 'account_verification':
       return '✓ Verify Your Account'
+    case 'account_verification_code':
+      return '✓ Your Verification Code'
     case 'password_reset':
       return '🔑 Reset Your Password'
     default:
@@ -397,6 +426,15 @@ export async function sendVerificationEmail(
   return sendEmail(to, 'account_verification', {
     verification: data,
   }, '✓ Verify Your Account')
+}
+
+export async function sendVerificationCodeEmail(
+  to: string,
+  data: EmailData['verificationCode']
+) {
+  return sendEmail(to, 'account_verification_code', {
+    verificationCode: data,
+  }, '✓ Your Verification Code')
 }
 
 export async function sendPasswordResetEmail(
