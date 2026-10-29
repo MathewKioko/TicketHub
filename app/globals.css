@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* clip (not hidden) so position: sticky keeps working inside the page */
+  html,
+  body {
+    overflow-x: clip;
+  }
+
+  body {
+    @apply bg-bone font-sans text-ink antialiased;
+  }
+
+  ::selection {
+    background: #c6431f;
+    color: #faf7f2;
+  }
+
+  :focus-visible {
+    outline: 2px solid #c6431f;
+    outline-offset: 2px;
+    border-radius: 1px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1ebe1;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #d8cdb9;
+    border: 2px solid #f1ebe1;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #c3b8a2;
+  }
+}
+
+@layer components {
+  /* Instrument Serif for display type, with tabular numerals available everywhere */
+  .display {
+    font-family: var(--font-display), Georgia, 'Times New Roman', serif;
+    font-weight: 400;
+    letter-spacing: -0.012em;
+  }
+
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* shared field styling, used by input/select/textarea primitives */
+  .field {
+    @apply w-full rounded-sm border border-line bg-paper px-3.5 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-slate-faint focus:border-ink disabled:bg-shell disabled:text-slate;
+  }
+
+  .link-quiet {
+    @apply text-slate underline decoration-line underline-offset-4 transition-colors hover:text-ink hover:decoration-flame;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  .print-hide {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+}

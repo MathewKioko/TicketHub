@@ -1,0 +1,469 @@
+// This is your Prisma schema file,
+// TicketHub v2 Enterprise Schema
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  ORGANIZER    // Legacy - event organizer
+  EVENT_OWNER // New - event owner (can have subaccount)
+  ATTENDEE    // Ticket buyer
+  ADMIN       // Platform admin
+  SCANNER     // Ticket scanner
+  PENDING_ORGANIZER // Awaiting admin approval
+}
+
+enum TicketStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  REFUNDED
+  CHECKED_IN
+  EXPIRED
+}
+
+enum PaymentMethod {
+  STRIPE
+  MPESA
+  PAYSTACK
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum TicketType {
+  REGULAR
+  VIP
+  VIP_PLATINUM
+  EARLY_BIRD
+  STUDENT
+  GROUP
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// ============================================
+// MODELS
+// ============================================
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  phone     String?
+  name      String
+  password  String?  // Optional for OAuth users
+  googleId  String? // Google OAuth ID
+  role      UserRole @default(ATTENDEE)
+
+  // Organizer request fields
+  organizerRequestStatus String?  // 'pending', 'approved', 'rejected'
+  organizerRequestAt     DateTime?
+  organizerApprovedAt   DateTime?
+  organizerNote         String?   // Admin note for approval/rejection
+
+  // Authentication fields
+  verified          Boolean   @default(false)
+  verificationToken String?
+  verificationExpires DateTime?
+  otp               String?
+  otpExpires        DateTime?
+  lastLogin         DateTime?
+  loginAttempts     Int       @default(0)
+  lockUntil         DateTime?
+
+  // Feature flags (v2)
+  features Json?    @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  organizedEvents     Event[]             @relation("EventOrganizer")
+  tickets             Ticket[]
+  sessions            Session[]
+  auditLogs           AuditLog[]
+  eventOwnerProfile   EventOwnerProfile?
+  ownedPayouts        Payout[]
+  payments            Payment[]
+
+  @@map("users")
+}
+
+// ============================================
+// EVENT OWNER PROFILE (Paystack Subaccount)
+// ============================================
+
+model EventOwnerProfile {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId                String   @unique @db.ObjectId
+  
+  // Paystack Subaccount
+  paystackSubaccountId  String?  // e.g., ACC_xxxxxxxxxxxxx
+  paystackBusinessName  String?
+  paystackSettledBank   String?
+  paystackAccountNumber String?
+  paystackSplitRatio    Float    @default(0.0) // Percentage that goes to platform (0-100)
+  
+  // Verification
+  bankVerified          Boolean  @default(false)
+  documentsVerified     Boolean  @default(false)
+  
+  // Payout settings
+  autoPayout            Boolean  @default(false)
+  payoutSchedule        String?  // daily, weekly, monthly
+  
+  // Stats
+  totalRevenue          Float    @default(0)
+  totalPayouts          Float    @default(0)
+  pendingPayouts        Float    @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("event_owner_profiles")
+}
+
+// ============================================
+// EVENT MODEL (Enhanced for v2)
+// ============================================
+
+model Event {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  venue       String
+  date        DateTime
+  endDate     DateTime?
+  imageUrl    String?
+  category    String
+  organizerId String    @db.ObjectId
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Pricing & Currency
+  basePrice Float  @default(0)
+  currency  String @default("KES") // Default to KES for Kenya
+  
+  // Event Status
+  status     String   @default("DRAFT") // DRAFT, PUBLISHED, CANCELLED, COMPLETED
+  isFeatured Boolean @default(false)
+  
+  // Ticket Types (embedded as JSON for flexibility)
+  ticketTypes Json?   @default("[]") // Array of {type, price, quantity, sold}
+  
+  // Event Settings
+  settings Json?      @default("{}") // Custom event settings
+  
+  // Sales tracking
+  totalTickets     Int @default(0)
+  ticketsSold      Int @default(0)
+  totalRevenue     Float @default(0)
+  
+  // Relations
+  organizer User      @relation("EventOrganizer", fields: [organizerId], references: [id])
+  tickets   Ticket[]
+  payments  Payment[]
+  checkIns  CheckIn[]
+  scanners  Scanner[]
+
+  @@index([organizerId])
+  @@index([date])
+  @@index([category])
+  @@index([status])
+  @@map("events")
+}
+
+// ============================================
+// TICKET MODEL (Enhanced for v2)
+// ============================================
+
+model Ticket {
+  id       String       @id @default(auto()) @map("_id") @db.ObjectId
+  eventId  String       @db.ObjectId
+  userId   String       @db.ObjectId
+  status   TicketStatus @default(PENDING)
+  paymentMethod PaymentMethod @default(PAYSTACK)
+  
+  // Ticket Details
+  ticketType     TicketType @default(REGULAR)
+  ticketPrice    Float?      // Price at time of purchase (nullable for legacy data)
+  price          Float      @default(0) // Alias for backward compatibility
+  quantity       Int        @default(1)
+  seatNumber     String?
+  seatRow        String?
+  
+  // Payment Reference
+  paymentId      String?    @db.ObjectId
+  payment        Payment?   @relation(fields: [paymentId], references: [id])
+
+  // Stripe
+  stripePaymentId String?
+  stripeSessionId String?
+
+  // M-Pesa
+  mpesaCheckoutRequestId String?
+  mpesaMerchantRequestId String?
+  mpesaReceiptNumber     String?
+  mpesaPhoneNumber       String?
+
+  // Paystack
+  paystackReference      String?
+  paystackAccessCode     String?
+
+  // QR Code
+  qrCodeData  String  @unique
+  qrCodeImage String? // Base64 or URL
+
+  // Check-in
+  checkedInAt DateTime?
+
+  // Refund
+  refundedAt     DateTime?
+  refundAmount   Float?
+  refundReference String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  event   Event    @relation(fields: [eventId], references: [id])
+  user    User     @relation(fields: [userId], references: [id])
+  checkIn CheckIn?
+
+  @@index([eventId])
+  @@index([userId])
+  @@index([status])
+  @@index([ticketType])
+  @@map("tickets")
+}
+
+// ============================================
+// PAYMENT MODEL (New for v2)
+// ============================================
+
+model Payment {
+  id        String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String        @db.ObjectId
+  eventId   String        @db.ObjectId
+  
+  // Amount
+  amount       Float
+  currency     String       @default("KES")
+  platformFee  Float        @default(0) // Platform's cut
+  eventOwnerPayout Float    @default(0) // What goes to event owner
+  
+  // Paystack
+  paystackReference      String?
+  paystackTransactionId  String?
+  paystackCustomerId     String?
+  
+  // Subaccount (for revenue split)
+  subaccountId       String?
+  splitRatio          Float     @default(0)
+  
+  // Status
+  status      PaymentStatus @default(PENDING)
+  processedAt DateTime?
+  
+  // Metadata
+  metadata    Json?   @default("{}")
+  
+  // Failure info
+  failureReason String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user    User     @relation(fields: [userId], references: [id])
+  event   Event    @relation(fields: [eventId], references: [id])
+  tickets Ticket[]
+
+  @@index([userId])
+  @@index([eventId])
+  @@index([status])
+  @@index([paystackReference])
+  @@index([createdAt])
+  @@map("payments")
+}
+
+// ============================================
+// PAYOUT MODEL (New for v2)
+// ============================================
+
+model Payout {
+  id                    String        @id @default(auto()) @map("_id") @db.ObjectId
+  eventOwnerId          String        @db.ObjectId
+  
+  // Amount
+  amount                Float
+  currency              String        @default("KES")
+  
+  // Paystack
+  paystackPayoutId      String?
+  paystackBatchId       String?
+  
+  // Status
+  status                PayoutStatus  @default(PENDING)
+  processedAt           DateTime?
+  
+  // Bank details (encrypted reference)
+  bankName              String?
+  accountNumber        String?
+  accountName          String?
+  
+  // Breakdown
+  grossAmount           Float
+  platformFee           Float
+  netAmount             Float
+  
+  // Reference
+  reference             String        @unique
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  eventOwner User @relation(fields: [eventOwnerId], references: [id])
+
+  @@index([eventOwnerId])
+  @@index([status])
+  @@map("payouts")
+}
+
+// ============================================
+// CHECK-IN MODEL
+// ============================================
+
+model CheckIn {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  ticketId    String   @unique @db.ObjectId
+  eventId     String   @db.ObjectId
+  checkedInAt DateTime @default(now())
+  scannerId   String?  @db.ObjectId // Who scanned the ticket
+
+  // Relations
+  ticket  Ticket  @relation(fields: [ticketId], references: [id])
+  event   Event   @relation(fields: [eventId], references: [id])
+  scanner Scanner? @relation(fields: [scannerId], references: [id])
+
+  @@index([eventId])
+  @@index([checkedInAt])
+  @@index([scannerId])
+  @@map("checkins")
+}
+
+// ============================================
+// SESSION MODEL
+// ============================================
+
+model Session {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// ============================================
+// SCANNER MODEL
+// ============================================
+
+model Scanner {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  deviceId    String   @unique
+  secret      String
+  eventId     String?  @db.ObjectId
+  isActive    Boolean  @default(true)
+  lastUsed    DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  event    Event?    @relation(fields: [eventId], references: [id])
+  checkIns CheckIn[]
+
+  @@index([eventId])
+  @@map("scanners")
+}
+
+// ============================================
+// AUDIT LOG MODEL (Enhanced for v2)
+// ============================================
+
+model AuditLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?  @db.ObjectId
+  action    String
+  resource  String   // e.g., "payment", "ticket", "event", "payout"
+  resourceId String?
+  details   Json?    @default("{}") // Structured details
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ============================================
+// FEATURE FLAGS MODEL (New for v2)
+// ============================================
+
+model FeatureFlag {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  description String?
+  enabled     Boolean  @default(false)
+  rollout     Float    @default(0) // 0-100 percentage
+  
+  // Targeting
+  userRoles   String[] @default([]) // Which roles can see this
+  userIds     String[] @default([]) // Specific user IDs
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("feature_flags")
+}
