@@ -125,8 +125,8 @@ export default function AdminPayoutsPage() {
               <THead>
                 <Th>Payout</Th>
                 <Th>Organizer</Th>
-                <Th>Payment Method</Th>
-                <Th>Payment Method</Th>
+                <Th>Bank</Th>
+                <Th>Status</Th>
                 <Th align="right">Amount</Th>
               </THead>
               <TBody>

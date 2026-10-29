@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { requireAuth } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
@@ -8,14 +7,14 @@ export async function GET(
 ) {
   try {
     const { sessionId } = params
-    
-    // Determine if this is a Stripe session ID or Paystack reference
-    // Paystack references start with "TICKET_"
+
+    // Determine if this is a Paystack reference or an M-Pesa checkout request ID.
+    // Paystack references start with "TICKET_"; M-Pesa IDs are long alphanumeric strings.
     const isPaystackReference = sessionId.startsWith('TICKET_')
-    
+
     const whereClause = isPaystackReference
       ? { paystackReference: sessionId }
-      : { stripeSessionId: sessionId }
+      : { mpesaCheckoutRequestId: sessionId }
 
     const tickets = await prisma.ticket.findMany({
       where: whereClause,
@@ -54,4 +53,3 @@ export async function GET(
     )
   }
 }
-
