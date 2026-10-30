@@ -50,7 +50,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Build Prisma where clause with advanced filters
-    const where: any = {}
+    const where: any = {
+      // Public portal only shows published events
+      status: 'PUBLISHED',
+    }
     
     // Category filter
     if (category) where.category = category
@@ -174,7 +177,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Get current user - any authenticated user can create events
+    // Get current user
     const currentUser = await getCurrentUser()
     
     if (!currentUser) {
@@ -185,6 +188,17 @@ export async function POST(request: NextRequest) {
     const data = createEventSchema.parse(body)
     
     const organizerId = currentUser.id
+    
+    // Check if user is verified organizer for auto-publish
+    const user = await prisma.user.findUnique({
+      where: { id: organizerId },
+      select: { role: true, verified: true }
+    })
+    
+    // Auto-publish if user is ADMIN or verified EVENT_OWNER/ORGANIZER
+    const isAutoPublish = currentUser.role === 'ADMIN' ||
+      (currentUser.role === 'EVENT_OWNER' && currentUser.verified === true) ||
+      (currentUser.role === 'ORGANIZER' && currentUser.verified === true)
 
     const event = await prisma.event.create({
       data: {
@@ -192,34 +206,21 @@ export async function POST(request: NextRequest) {
         date: new Date(data.date),
         endDate: data.endDate ? new Date(data.endDate) : null,
         organizerId: organizerId,
+        status: isAutoPublish ? 'PUBLISHED' : 'PENDING', // Auto-publish if verified
       },
       include: {
         organizer: {
           select: {
             id: true,
             name: true,
+            email: true,
           },
         },
       },
     })
 
-    // Invalidate events cache when new event is created (BEAST LEVEL: Cache invalidation)
-    const cacheAvailable = await CacheService.isAvailable()
-    if (cacheAvailable) {
-      await CacheService.delPattern('events:*')
-      console.log('🗑️ Cache invalidated for events:*')
-    }
-
     return NextResponse.json({ event }, { status: 201 })
-  } catch (error: any) {
-    // Handle authentication/authorization errors
-    if (error.message === 'Unauthorized' || error.message?.includes('Forbidden')) {
-      return NextResponse.json(
-        { error: error.message || 'You must be logged in to create an event.' },
-        { status: error.message.includes('Forbidden') ? 403 : 401 }
-      )
-    }
-    
+  } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Invalid input', details: error.errors },
@@ -233,5 +234,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
-
+}  
