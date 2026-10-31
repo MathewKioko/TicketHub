@@ -270,8 +270,162 @@ export function isMpesaConfigured(): boolean {
   )
 }
 
+// ============================================
+// M-PESA B2C PAYOUT (Business to Customer)
+// ============================================
+
+/**
+ * Send money from your M-Pesa business paybill/till to an organizer's M-Pesa number.
+ * Uses Safaricom B2C API.
+ */
+export type B2CPayoutParams = {
+  amount: number // Amount in KES
+  phoneNumber: string // Organizer's M-Pesa number (2547XXXXXXXX)
+  remark: string // Description for the transaction
+  occasion?: string
+}
+
+export type B2CPayoutResponse = {
+  success: boolean
+  conversationID: string
+  originatorConversationID: string
+  responseDescription: string
+  transactionID?: string
+  message: string
+}
+
+export async function initiateB2CPayout({
+  amount,
+  phoneNumber,
+  remark,
+  occasion = 'TicketHub Payout',
+}: B2CPayoutParams): Promise<B2CPayoutResponse> {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error('Payout amount must be a positive number')
+  }
+
+  const parsedAmount = Math.ceil(amount)
+  const msisdn = phoneNumber.replace(/\D/g, '')
+  if (!/^254\d{9}$/.test(msisdn)) {
+    throw new Error('Organizer phone number must be in format 2547XXXXXXXX')
+  }
+
+  const accessToken = await getAccessToken()
+  const timestamp = new Date()
+    .toISOString()
+    .replace(/[-:TZ.]/g, '')
+    .slice(0, 14)
+
+  const payload = {
+    InitiatorName: process.env.MPESA_INITIATOR_NAME || '',
+    SecurityCredential: process.env.MPESA_SECURITY_CREDENTIAL || '',
+    CommandID: 'BusinessPayment',
+    Amount: parsedAmount,
+    PartyA: assertEnvVar(MPESA_SHORTCODE, 'MPESA_SHORTCODE'), // Your business paybill/till
+    PartyB: msisdn, // Organizer's M-Pesa number
+    Remarks: remark.substring(0, 100),
+    QueueTimeOutURL: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/mpesa/b2c/timeout`,
+    ResultURL: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/mpesa/b2c/result`,
+    Occasion: occasion.substring(0, 25),
+  }
+
+  try {
+    const response = await axios.post(
+      `${MPESA_BASE_URL}/mpesa/b2c/v1/paymentrequest`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000,
+      }
+    )
+
+    return {
+      success: true,
+      conversationID: response.data.ConversationID ?? '',
+      originatorConversationID: response.data.OriginatorConversationID ?? '',
+      responseDescription: response.data.ResponseDescription ?? '',
+      message: response.data.ResponseDescription ?? 'Payout initiated successfully',
+    }
+  } catch (error: any) {
+    console.error('M-Pesa B2C payout error:', error.response?.data || error.message)
+    if (error.response?.data?.errorMessage) {
+      throw new Error(error.response.data.errorMessage)
+    }
+    if (error.response?.data?.error_description) {
+      throw new Error(error.response.data.error_description)
+    }
+    throw new Error(error.message || 'M-Pesa B2C payout failed')
+  }
+}
+
+/**
+ * Query B2C transaction status
+ */
+export type B2CQueryParams = {
+  conversationID: string
+}
+
+export async function queryB2CPayoutStatus({
+  conversationID,
+}: B2CQueryParams): Promise<{
+  success: boolean
+  resultCode: number
+  resultDescription: string
+  transactionID?: string
+}> {
+  if (!conversationID) {
+    throw new Error('conversationID is required')
+  }
+
+  const accessToken = await getAccessToken()
+  const timestamp = new Date()
+    .toISOString()
+    .replace(/[-:TZ.]/g, '')
+    .slice(0, 14)
+
+  const payload = {
+    InitiatorName: process.env.MPESA_INITIATOR_NAME || '',
+    SecurityCredential: process.env.MPESA_SECURITY_CREDENTIAL || '',
+    CommandID: 'TransactionStatusQuery',
+    TransactionID: conversationID,
+    PartyA: assertEnvVar(MPESA_SHORTCODE, 'MPESA_SHORTCODE'),
+    IdentifierType: '4', // Shortcode
+    ResultURL: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/mpesa/b2c/query/result`,
+    QueueTimeOutURL: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/mpesa/b2c/query/timeout`,
+    Remarks: 'Query B2C payout status',
+  }
+
+  try {
+    const response = await axios.post(
+      `${MPESA_BASE_URL}/mpesa/transactionstatus/v1/query`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000,
+      }
+    )
+
+    return {
+      success: true,
+      resultCode: response.data.ResultCode ?? -1,
+      resultDescription: response.data.ResultDescription ?? '',
+      transactionID: response.data.TransactionID,
+    }
+  } catch (error: any) {
+    console.error('M-Pesa B2C query error:', error.response?.data || error.message)
+    if (error.response?.data?.errorMessage) {
+      throw new Error(error.response.data.errorMessage)
+    }
+    throw new Error(error.message || 'M-Pesa B2C query failed')
+  }
+}
 
 export { getAccessToken }
-
 
 

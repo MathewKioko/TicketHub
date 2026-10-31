@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { extractMpesaCallbackData, type MpesaCallbackResult } from '@/lib/mpesa'
+import { getCurrentUser } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,6 +35,14 @@ export async function POST(request: NextRequest) {
           select: {
             id: true,
             title: true,
+            organizerId: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
           },
         },
       },
@@ -50,19 +59,59 @@ export async function POST(request: NextRequest) {
       const { mpesaReceiptNumber, amount, phoneNumber, transactionDate } =
         extractMpesaCallbackData(callbackData)
 
-      // Update all tickets to CONFIRMED
-      await prisma.ticket.updateMany({
-        where: {
-          mpesaCheckoutRequestId: CheckoutRequestID,
-          status: 'PENDING',
-        },
-        data: {
-          status: 'CONFIRMED',
-          mpesaReceiptNumber,
-        },
+      // Get organizer's profile for split ratio
+      const organizerId = tickets[0].event.organizerId
+      const profile = await prisma.eventOwnerProfile.findUnique({
+        where: { userId: organizerId },
       })
 
-      // Emit real-time ticket count update (BEAST LEVEL: Real-time updates)
+      const platformFeeRatio = profile?.paystackSplitRatio ?? 10
+      const platformFeeAmount = Math.round((amount * platformFeeRatio) / 100 * 100) / 100
+      const organizerPayoutAmount = amount - platformFeeAmount
+
+      // Create Payment records for each ticket
+      await Promise.all(
+        tickets.map(async (t) => {
+          await prisma.payment.create({
+            data: {
+              userId: t.userId,
+              eventId: t.eventId,
+              amount: t.price * t.quantity,
+              currency: 'KES',
+              platformFee: platformFeeAmount / tickets.length,
+              eventOwnerPayout: organizerPayoutAmount / tickets.length,
+              status: 'SUCCESS',
+              processedAt: new Date(),
+              metadata: {
+                mpesaReceiptNumber,
+                paymentMethod: 'MPESA',
+              },
+            },
+          })
+
+          // Update ticket to CONFIRMED
+          await prisma.ticket.update({
+            where: { id: t.id },
+            data: {
+              status: 'CONFIRMED',
+              mpesaReceiptNumber,
+            },
+          })
+        })
+      )
+
+      // Update organizer pending payout balance
+      if (profile) {
+        await prisma.eventOwnerProfile.update({
+          where: { userId: organizerId },
+          data: {
+            totalRevenue: { increment: organizerPayoutAmount },
+            pendingPayouts: { increment: organizerPayoutAmount },
+          },
+        })
+      }
+
+      // Emit real-time ticket count update
       if (tickets.length > 0) {
         try {
           const eventId = tickets[0].event.id
@@ -86,6 +135,8 @@ export async function POST(request: NextRequest) {
       console.log(`✅ M-Pesa payment confirmed for ${tickets.length} ticket(s)`, {
         receiptNumber: mpesaReceiptNumber,
         amount,
+        platformFeeAmount,
+        organizerPayoutAmount,
         phoneNumber,
       })
 
@@ -97,9 +148,17 @@ export async function POST(request: NextRequest) {
         CheckoutRequestID,
       })
 
-      // Optionally update tickets to CANCELLED or leave as PENDING
-      // For now, we'll leave them as PENDING so user can retry
-      
+      // Mark tickets as CANCELLED
+      await prisma.ticket.updateMany({
+        where: {
+          mpesaCheckoutRequestId: CheckoutRequestID,
+          status: 'PENDING',
+        },
+        data: {
+          status: 'CANCELLED',
+        },
+      })
+
       return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' })
     }
   } catch (error) {
