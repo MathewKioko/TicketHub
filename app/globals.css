@@ -5,6 +5,40 @@
 @layer base {
   :root {
     color-scheme: light;
+
+    --bg: #faf7f2;
+    --bg-paper: #ffffff;
+    --bg-shell: #f3efe7;
+    --bg-border: #e3daca;
+    --text-ink: #16130f;
+    --text-slate: #4c453b;
+    --text-slate-faint: #8a8072;
+    --accent-flame: #c6431f;
+    --accent-bg-flame: #fdeeda;
+    --accent-green: #1c5c42;
+    --accent-bg-green: #eef6f1;
+    --accent-danger: #96201a;
+    --accent-bg-danger: #fbeae8;
+    --border-radius: 6px;
+  }
+
+  .dark {
+    color-scheme: dark;
+
+    --bg: #0f0e0c;
+    --bg-paper: #141311;
+    --bg-shell: #1c1a17;
+    --bg-border: #3a3630;
+    --text-ink: #faf7f2;
+    --text-slate: #a89f91;
+    --text-slate-faint: #6e6556;
+    --accent-flame: #e8633a;
+    --accent-bg-flame: #3a2014;
+    --accent-green: #5aa97e;
+    --accent-bg-green: #1b2f25;
+    --accent-danger: #c45648;
+    --accent-bg-danger: #3d1d18;
+    --border-radius: 6px;
   }
 
   html {
@@ -18,7 +52,9 @@
   }
 
   body {
-    @apply bg-bone font-sans text-ink antialiased;
+    @apply font-sans text-ink antialiased;
+    background-color: var(--bg);
+    color: var(--text-ink);
   }
 
   ::selection {
@@ -95,6 +131,55 @@
   }
 }
 
+@layer base {
+  /* Dark mode overrides for key Tailwind utilities */
+  .dark .bg-bone {
+    background-color: var(--bg);
+  }
+  .dark .bg-paper {
+    background-color: var(--bg-paper);
+  }
+  .dark .bg-shell {
+    background-color: var(--bg-shell);
+  }
+  .dark .border-line {
+    border-color: var(--bg-border);
+  }
+  .dark .text-ink {
+    color: var(--text-ink);
+  }
+  .dark .text-slate {
+    color: var(--text-slate);
+  }
+  .dark .text-slate-faint {
+    color: var(--text-slate-faint);
+  }
+  .dark .text-bone {
+    color: var(--text-ink);
+  }
+  .dark .bg-ink {
+    background-color: var(--text-ink);
+  }
+  .dark .hover\:bg-ink:hover {
+    background-color: var(--text-ink);
+  }
+  .dark .border-ink {
+    border-color: var(--text-ink);
+  }
+  .dark .hover\:text-ink:hover {
+    color: var(--text-ink);
+  }
+  .dark .hover\:bg-flame-soft:hover {
+    background-color: var(--accent-bg-flame);
+  }
+  .dark .hover\:bg-ink-soft:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  .dark .hover\:text-flame:hover {
+    color: var(--accent-flame);
+  }
+}
+
 @media print {
   .print-hide {
     display: none !important;
@@ -102,5 +187,11 @@
 
   body {
     background: #fff;
+    color: #000;
+  }
+
+  .dark {
+    background: #fff !important;
+    color: #000 !important;
   }
 }

@@ -3,6 +3,7 @@ import { Archivo, Instrument_Serif } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
 import './globals.css'
 import { AuthProvider } from '@/components/providers/AuthProvider'
+import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { SiteFooter } from '@/components/layout/SiteFooter'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 
@@ -42,8 +43,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${sans.variable} ${display.variable}`}>
       <body>
-        <AuthProvider>
-          <a
+        <ThemeProvider>
+          <AuthProvider>
+            <a
             href="#main"
             className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-[70] focus:bg-ink focus:px-3 focus:py-2 focus:text-xs focus:text-bone"
           >
@@ -69,6 +71,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             }}
           />
         </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
