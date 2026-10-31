@@ -710,3 +710,67 @@ export async function createRecipient(params: CreateRecipientParams): Promise<{
     throw new Error(error.message || 'Failed to create Paystack recipient')
   }
 }
+
+/**
+ * Verify a bank account using PayStack's resolve account endpoint.
+ * Returns the account name if valid, throws if invalid.
+ */
+export type VerifyBankAccountParams = {
+  bankCode: string
+  accountNumber: string
+}
+
+export type VerifyBankAccountResult = {
+  success: boolean
+  accountName?: string
+  bankName?: string
+  error?: string
+}
+
+export async function verifyBankAccount({
+  bankCode,
+  accountNumber,
+}: VerifyBankAccountParams): Promise<VerifyBankAccountResult> {
+  if (!bankCode?.trim()) {
+    return { success: false, error: 'Bank code is required' }
+  }
+  if (!accountNumber?.trim()) {
+    return { success: false, error: 'Account number is required' }
+  }
+
+  try {
+    const response = await axios.get(
+      `${PAYSTACK_BASE_URL}/bank/resolve?account_number=${encodeURIComponent(accountNumber)}&bank_code=${encodeURIComponent(bankCode)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${assertEnvVar(PAYSTACK_SECRET_KEY, 'PAYSTACK_SECRET_KEY')}`,
+        },
+        timeout: 15000,
+      }
+    )
+
+    if (response.data.status && response.data.data) {
+      return {
+        success: true,
+        accountName: response.data.data.account_name,
+        bankName: response.data.data.bank_name,
+      }
+    } else {
+      return {
+        success: false,
+        error: response.data.message || 'Account not found',
+      }
+    }
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      return { success: false, error: 'Account number not found for this bank' }
+    }
+    if (error.response?.data?.message) {
+      return { success: false, error: error.response.data.message }
+    }
+    return {
+      success: false,
+      error: error.message || 'Account verification failed',
+    }
+  }
+}

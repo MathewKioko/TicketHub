@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
-import { createSubaccount, verifyBankAccount } from '@/lib/paystack-subaccounts'
+import { verifyBankAccount, createSubaccount } from '@/lib/paystack'
 
 // GET /api/owner/profile - Get event owner profile
 export async function GET(request: NextRequest) {
@@ -93,13 +93,14 @@ export async function POST(request: NextRequest) {
         businessName,
         bankCode,
         accountNumber,
+        accountName,
         percentageCharge: splitRatio || 10, // Default 10% platform fee
         description: `Event owner: ${currentUser.name}`,
       })
 
       if (!subaccountResult.success) {
         return NextResponse.json(
-          { error: 'Failed to create Paystack subaccount', details: subaccountResult.error },
+          { error: 'Failed to create Paystack subaccount', details: subaccountResult.message },
           { status: 500 }
         )
       }
