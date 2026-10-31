@@ -11,7 +11,7 @@ const prisma = new PrismaClient()
 async function createAdminUser() {
   try {
     const email = 'mathewtech200@gmail.com'
-    const password = 'Mathew@2026'
+    const password = 'Theplug@254'
     const name = 'Mathew Kioko'
 
     // Check if user exists
