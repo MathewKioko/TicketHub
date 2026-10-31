@@ -15,7 +15,9 @@ export function PaymentReturn({ paymentMethod }: { paymentMethod?: 'paystack' | 
   const params = useSearchParams()
   const [state, setState] = useState<PaymentState>('loading')
   const [ticketId, setTicketId] = useState<string | null>(null)
-  const [message, setMessage] = useState('Checking your payment status')
+  const [message, setMessage] = useState<string>('Checking your payment status')
+  const [attempt, setAttempt] = useState(0)
+  const [maxAttemptsReached, setMaxAttemptsReached] = useState(false)
 
   const isMpesa = paymentMethod === 'mpesa'
   const param = isMpesa ? params.get('checkoutRequestId') : params.get('reference')
@@ -29,13 +31,17 @@ export function PaymentReturn({ paymentMethod }: { paymentMethod?: 'paystack' | 
 
     const reference = param
     let cancelled = false
+    let currentAttempt = 0
 
     async function poll() {
-      for (let attempt = 0; attempt < 30; attempt++) {
+      for (let attemptIndex = 0; attemptIndex < 30; attemptIndex++) {
         if (cancelled) return
+        currentAttempt = attemptIndex + 1
+        setAttempt(currentAttempt)
+        setMaxAttemptsReached(false)
+
         try {
           if (isMpesa) {
-            // Ask M-Pesa directly whether the STK Push completed.
             const statusResponse = await fetch('/api/mpesa/status', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -49,6 +55,7 @@ export function PaymentReturn({ paymentMethod }: { paymentMethod?: 'paystack' | 
                 if (ticket) {
                   setTicketId(ticket)
                   setState('confirmed')
+                  setMessage('Payment confirmed. Your ticket is ready.')
                 } else {
                   setState('pending')
                   setMessage('Payment received. We are issuing your ticket.')
@@ -56,13 +63,14 @@ export function PaymentReturn({ paymentMethod }: { paymentMethod?: 'paystack' | 
               }
               return
             }
-            setMessage(
-              data.resultDesc
-                ? `M-Pesa: ${data.resultDesc}`
-                : 'Payment not yet confirmed. We keep checking.'
-            )
+            if (!cancelled) {
+              setMessage(
+                data.resultDesc
+                  ? `M-Pesa: ${data.resultDesc}`
+                  : 'Payment not yet confirmed. We keep checking.'
+              )
+            }
           } else {
-            // Verify the Paystack transaction and mark tickets CONFIRMED server-side.
             const response = await fetch(`/api/paystack/verify/${encodeURIComponent(reference)}`)
             const data = await response.json()
             if (data.verified) {
@@ -71,6 +79,7 @@ export function PaymentReturn({ paymentMethod }: { paymentMethod?: 'paystack' | 
                 if (ticket) {
                   setTicketId(ticket)
                   setState('confirmed')
+                  setMessage('Payment confirmed. Your ticket is ready.')
                 } else {
                   setState('pending')
                   setMessage('Payment confirmed. We are issuing your ticket.')
@@ -78,16 +87,23 @@ export function PaymentReturn({ paymentMethod }: { paymentMethod?: 'paystack' | 
               }
               return
             }
-            setMessage(data.message ?? 'Payment not yet confirmed. We keep checking.')
+            if (!cancelled) {
+              setMessage(data.message ?? 'Payment not yet confirmed. We keep checking.')
+            }
           }
         } catch {
-          if (!cancelled) setMessage('Could not reach the payment service. Retrying…')
+          if (!cancelled) {
+            setMessage('Could not reach the payment service. Retrying…')
+          }
         }
         await new Promise((resolve) => setTimeout(resolve, 3000))
       }
       if (!cancelled) {
+        setMaxAttemptsReached(true)
         setState('failed')
-        setMessage('We could not confirm your payment. Please contact support with your reference.')
+        setMessage(
+          'We could not confirm your payment after multiple attempts. Please contact support with your reference.'
+        )
       }
     }
 
@@ -99,7 +115,6 @@ export function PaymentReturn({ paymentMethod }: { paymentMethod?: 'paystack' | 
 
   async function findTicketByCheckoutId(reference: string): Promise<string | null> {
     try {
-      // The session endpoint accepts both Paystack references and Stripe session IDs.
       const response = await fetch(`/api/tickets/session/${encodeURIComponent(reference)}`)
       const data = await response.json()
       const tickets = data.tickets ?? []
@@ -117,10 +132,26 @@ export function PaymentReturn({ paymentMethod }: { paymentMethod?: 'paystack' | 
     return findTicketByCheckoutId(reference)
   }
 
+  async function retry() {
+    setAttempt(0)
+    setMaxAttemptsReached(false)
+    setState('loading')
+    setMessage('Checking your payment status again…')
+    // Re-trigger the effect by forcing a re-mount via state
+    window.location.reload()
+  }
+
   if (state === 'loading' || (state === 'pending' && !ticketId)) {
     return (
       <div className="mx-auto max-w-[620px] px-5 py-14">
-        <Spinner label={message} />
+        <div className="flex flex-col items-center gap-4">
+          <Spinner label={message} />
+          {attempt > 0 && (
+            <p className="text-xs text-slate">
+              Attempt {attempt} of 30 · Checking every 3 seconds
+            </p>
+          )}
+        </div>
       </div>
     )
   }
@@ -148,7 +179,9 @@ export function PaymentReturn({ paymentMethod }: { paymentMethod?: 'paystack' | 
 
   return (
     <div className="mx-auto max-w-[620px] px-5 py-14">
-      <h1 className="display text-[34px] leading-tight">Payment not confirmed</h1>
+      <h1 className="display text-[34px] leading-tight">
+        {maxAttemptsReached ? 'Payment check timed out' : 'Payment not confirmed'}
+      </h1>
       <Notice tone="warning" className="mt-5" title={ticketStatus('PENDING').label}>
         {message}
       </Notice>
