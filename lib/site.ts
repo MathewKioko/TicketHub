@@ -25,6 +25,7 @@ export const ADMIN_TABS: NavLink[] = [
   { label: 'Overview', href: '/dashboard/admin' },
   { label: 'Users', href: '/dashboard/admin/users' },
   { label: 'Payouts', href: '/dashboard/admin/payouts' },
+  { label: 'Bank verification', href: '/dashboard/admin/bank-verification' },
   { label: 'Settings', href: '/dashboard/admin/settings' },
   { label: 'Admin Roles', href: '/dashboard/admin/roles' },
   { label: 'Audit Log', href: '/dashboard/admin/audit' },

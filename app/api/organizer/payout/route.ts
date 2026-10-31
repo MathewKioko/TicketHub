@@ -40,6 +40,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (!profile.bankVerified) {
+      return NextResponse.json(
+        { error: 'Bank account not verified by admin. Please upload your bank statement and wait for approval.' },
+        { status: 403 }
+      )
+    }
+
     // Check pending payouts balance
     if (amount > profile.pendingPayouts) {
       return NextResponse.json(

@@ -138,6 +138,12 @@ model EventOwnerProfile {
   autoPayout            Boolean  @default(false)
   payoutSchedule        String?  // daily, weekly, monthly
   
+  // Bank verification
+  bankVerificationNote  String?    // Admin note for approval/rejection
+  bankStatementUrl      String?    // URL to uploaded bank statement
+  bankStatementUploadedAt DateTime? // When statement was uploaded
+  bankVerificationStatus String?  // 'PENDING', 'VERIFIED', 'REJECTED'
+  
   // Stats
   totalRevenue          Float    @default(0)
   totalPayouts          Float    @default(0)
