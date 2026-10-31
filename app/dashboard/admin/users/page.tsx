@@ -29,6 +29,7 @@ export default function AdminUsersPage() {
   const [requestFilter, setRequestFilter] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
 
   async function suspendUser(userId: string, action: 'suspend' | 'unsuspend') {
@@ -46,6 +47,26 @@ export default function AdminUsersPage() {
       await load()
     } catch (actionError) {
       setError(actionError instanceof Error ? actionError.message : 'That change was rejected.')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  async function deleteUser(userId: string) {
+    if (!window.confirm('Delete this user? This removes their account, tickets, and payment history permanently.')) return
+    if (busyId) return
+    setBusyId(userId)
+    setError(null)
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'DELETE',
+      })
+      const data = (await response.json().catch(() => ({}))) as { error?: string; message?: string }
+      if (!response.ok) throw new Error(data.error ?? 'Delete rejected.')
+      setMessage(data.message ?? 'User deleted.')
+      await load()
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : 'Delete rejected.')
     } finally {
       setBusyId(null)
     }
@@ -171,6 +192,10 @@ export default function AdminUsersPage() {
           </Notice>
         ) : null}
 
+        {message ? (
+          <Notice tone="success" className="mt-5">{message}</Notice>
+        ) : null}
+
         {loading ? (
           <div className="mt-6 space-y-3">
             <Skeleton className="h-5 w-48" />
@@ -275,6 +300,15 @@ export default function AdminUsersPage() {
                               className="text-flame hover:bg-flame-soft ml-2"
                             >
                               Suspend
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => void deleteUser(user.id)}
+                              disabled={busyId === user.id}
+                              className="text-danger hover:bg-danger-soft ml-2"
+                            >
+                              Delete
                             </Button>
                           </>
                         )}
