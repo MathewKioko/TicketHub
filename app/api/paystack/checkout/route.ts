@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
             id: true,
             title: true,
             basePrice: true,
+            organizerId: true,
           },
         },
         user: {
@@ -80,6 +81,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Get organizer's subaccount for revenue split
+    const eventOwnerProfile = await prisma.eventOwnerProfile.findUnique({
+      where: { userId: tickets[0].event.organizerId },
+      select: {
+        paystackSubaccountId: true,
+        paystackSplitRatio: true,
+      },
+    })
+
     // Calculate total amount
     const totalAmount = tickets.reduce(
       (sum: number, ticket: { price: number }) => sum + ticket.price,
@@ -90,12 +100,31 @@ export async function POST(request: NextRequest) {
     // For KES: 1 KES = 100 cents
     const amountInCents = Math.round(totalAmount * 100)
 
+    // Calculate platform fee and organizer payout
+    const platformFeeRatio = eventOwnerProfile?.paystackSplitRatio ?? 10
+    const platformFeeAmount = Math.round((totalAmount * platformFeeRatio) / 100 * 100) / 100 // in KES
+    const organizerPayoutAmount = totalAmount - platformFeeAmount
+
     // Generate unique reference
     const reference = generateTicketReference()
 
     // Get base URL for callback
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
     const callbackUrl = `${baseUrl}/tickets/success?reference=${reference}`
+
+    // Prepare metadata for revenue split
+    const metadata: Record<string, any> = {
+      phone: user.phone || '',
+      ticketType: tickets[0].event?.title || 'Event Ticket',
+      platformFeeAmount,
+      organizerPayoutAmount,
+      platformFeeRatio,
+    }
+
+    // Add subaccount for automatic split if available
+    if (eventOwnerProfile?.paystackSubaccountId) {
+      metadata.subaccount = eventOwnerProfile.paystackSubaccountId
+    }
 
     // Initialize Paystack payment
     const payment = await initializePayment({
@@ -106,9 +135,22 @@ export async function POST(request: NextRequest) {
       eventId: tickets[0].eventId,
       ticketIds,
       callbackUrl,
-      metadata: {
-        phone: user.phone || '',
-        ticketType: tickets[0].event?.title || 'Event Ticket',
+      metadata,
+    })
+
+    // Create Payment record with fee split
+    await prisma.payment.create({
+      data: {
+        userId: currentUser.id,
+        eventId: tickets[0].eventId,
+        amount: totalAmount,
+        currency: 'KES',
+        platformFee: platformFeeAmount,
+        eventOwnerPayout: organizerPayoutAmount,
+        paystackReference: reference,
+        status: 'PENDING',
+        subaccountId: eventOwnerProfile?.paystackSubaccountId ?? undefined,
+        splitRatio: platformFeeRatio,
       },
     })
 
@@ -119,6 +161,7 @@ export async function POST(request: NextRequest) {
         paystackReference: reference,
         paystackAccessCode: payment.accessCode,
         paymentMethod: 'PAYSTACK',
+        ticketPrice: tickets[0].price,
       },
     })
 
@@ -128,6 +171,12 @@ export async function POST(request: NextRequest) {
       reference: payment.reference,
       authorizationUrl: payment.authorizationUrl,
       publicKey: getPaystackPublicKey(),
+      feeSplit: {
+        platformFee: platformFeeAmount,
+        organizerPayout: organizerPayoutAmount,
+        platformFeeRatio,
+        hasSubaccount: !!eventOwnerProfile?.paystackSubaccountId,
+      },
     })
   } catch (err: unknown) {
     if (err instanceof z.ZodError) {
