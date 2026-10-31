@@ -141,6 +141,7 @@ export async function POST(request: NextRequest) {
       success: true,
       checkoutRequestId: stkResponse.CheckoutRequestID,
       merchantRequestId: stkResponse.MerchantRequestID,
+      authorizationUrl: `${baseUrl}/tickets/mpesa-success?checkoutRequestId=${stkResponse.CheckoutRequestID}`,
       customerMessage: stkResponse.CustomerMessage,
       message: 'M-Pesa payment request sent to your phone. Please complete the payment on your phone.',
     })
