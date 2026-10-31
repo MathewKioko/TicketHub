@@ -180,3 +180,94 @@ export async function PATCH(
     )
   }
 }
+
+// DELETE /api/admin/users/[userId] - Delete a user account (admin only)
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ userId: string }> }
+) {
+  try {
+    const currentUser = await getCurrentUser()
+
+    if (!currentUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (currentUser.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+    }
+
+    const { userId } = await params
+
+    // Prevent deleting yourself
+    if (currentUser.id === userId) {
+      return NextResponse.json(
+        { error: 'Cannot delete your own account' },
+        { status: 400 }
+      )
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, name: true, role: true },
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // Prevent deleting the last admin
+    if (user.role === 'ADMIN') {
+      const adminCount = await prisma.user.count({
+        where: { role: 'ADMIN' },
+      })
+      if (adminCount <= 1) {
+        return NextResponse.json(
+          { error: 'Cannot delete the last admin account' },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Delete related data first (tickets, payments, payouts, event owner profile, etc.)
+    await prisma.ticket.deleteMany({ where: { userId } })
+    await prisma.payment.deleteMany({ where: { userId } })
+    await prisma.payout.deleteMany({ where: { eventOwnerId: userId } })
+    await prisma.eventOwnerProfile.deleteMany({ where: { userId } })
+
+    await prisma.user.delete({
+      where: { id: userId },
+    })
+
+    // Log the deletion
+    try {
+      await prisma.auditLog.create({
+        data: {
+          userId: currentUser.id,
+          action: 'USER_DELETED',
+          resource: 'user',
+          details: JSON.stringify({
+            targetUserId: userId,
+            targetEmail: user.email,
+            targetName: user.name,
+            targetRole: user.role,
+            timestamp: new Date().toISOString(),
+          }),
+        },
+      })
+    } catch (auditError) {
+      console.error('Failed to log audit:', auditError)
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `User ${user.email} deleted successfully`,
+    })
+  } catch (error) {
+    console.error('Error deleting user:', error)
+    return NextResponse.json(
+      { error: 'Failed to delete user' },
+      { status: 500 }
+    )
+  }
+}
