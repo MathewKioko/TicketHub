@@ -157,6 +157,11 @@
   .dark .text-bone {
     color: var(--text-ink);
   }
+  /* When bg-ink is white in dark mode, text inside it must be dark */
+  .dark .bg-ink .text-bone,
+  .dark .bg-ink.text-bone {
+    color: var(--bg);
+  }
   .dark .bg-ink {
     background-color: var(--text-ink);
   }

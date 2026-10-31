@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
@@ -31,9 +32,15 @@ export function SiteHeader() {
       <header className="border-b border-line bg-bone print-hide">
         <div className="mx-auto flex h-[66px] max-w-[1400px] items-center justify-between px-5 sm:px-8">
           <div className="flex items-center gap-10">
-            <Link href="/" aria-label="TicketHub home" className="flex items-center gap-2.5">
-              <span aria-hidden className="block h-[10px] w-[10px] bg-flame" />
-              <span className="text-[15px] font-semibold tracking-[0.17em]">TICKETHUB</span>
+            <Link href="/" aria-label="TicketHub home" className="flex items-center gap-2">
+              <Image
+                src="/LOGO.png"
+                alt="TicketHub"
+                width={48}
+                height={48}
+                className="h-[48px] w-[48px] object-contain"
+              />
+              <span className="text-[18px] font-bold tracking-[0.17em]">TICKETHUB</span>
             </Link>
 
             <nav aria-label="Primary" className="hidden items-center gap-7 text-[13px] md:flex">
@@ -92,7 +99,7 @@ export function SiteHeader() {
               type="button"
               onClick={toggleTheme}
               aria-label={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              className="flex items-center gap-2 text-[12px] font-medium md:hidden"
+              className="flex items-center gap-2 text-[12px] font-medium"
               title={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {resolvedTheme === 'dark' ? (
