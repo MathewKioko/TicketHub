@@ -53,17 +53,28 @@ export async function POST(request: NextRequest) {
       payoutSchedule,
     } = body
 
-    // Verify bank account first
-    const verificationResult = await verifyBankAccount({
-      bankCode,
-      accountNumber,
-    })
-
-    if (!verificationResult.success) {
+    // Validate required fields
+    if (!businessName?.trim() || !accountNumber?.trim() || !bankCode?.trim() || !accountName?.trim()) {
       return NextResponse.json(
-        { error: 'Invalid bank account details', details: verificationResult.error },
+        { error: 'All bank account fields are required' },
         { status: 400 }
       )
+    }
+
+    // Attempt bank account verification via PayStack (non-blocking for infra issues)
+    let bankVerified = false
+    let verificationError: string | undefined
+    try {
+      const verificationResult = await verifyBankAccount({
+        bankCode,
+        accountNumber,
+      })
+      bankVerified = verificationResult.success
+      verificationError = verificationResult.error
+    } catch {
+      // PayStack infrastructure issue — allow profile creation but mark as unverified
+      bankVerified = false
+      verificationError = 'Bank verification service unavailable'
     }
 
     // Check if profile already exists
@@ -84,44 +95,64 @@ export async function POST(request: NextRequest) {
           paystackSplitRatio: splitRatio || 0,
           autoPayout: autoPayout || false,
           payoutSchedule: payoutSchedule || 'weekly',
-          bankVerified: true,
+          bankVerified: bankVerified,
         },
       })
     } else {
-      // Create new Paystack subaccount
-      const subaccountResult = await createSubaccount({
-        businessName,
-        bankCode,
-        accountNumber,
-        accountName,
-        percentageCharge: splitRatio || 10, // Default 10% platform fee
-        description: `Event owner: ${currentUser.name}`,
-      })
-
-      if (!subaccountResult.success) {
-        return NextResponse.json(
-          { error: 'Failed to create Paystack subaccount', details: subaccountResult.message },
-          { status: 500 }
-        )
+      // Create new Paystack subaccount (only if bank verified)
+      let subaccountResult
+      if (bankVerified) {
+        try {
+          subaccountResult = await createSubaccount({
+            businessName,
+            bankCode,
+            accountNumber,
+            accountName,
+            percentageCharge: splitRatio || 10,
+            description: `Event owner: ${currentUser.name}`,
+          })
+        } catch {
+          subaccountResult = null
+        }
       }
 
-      // Create profile with subaccount
-      profile = await prisma.eventOwnerProfile.create({
-        data: {
-          userId: currentUser.id,
-          paystackSubaccountId: subaccountResult.subaccountCode,
-          paystackBusinessName: businessName,
-          paystackSettledBank: bankCode,
-          paystackAccountNumber: accountNumber,
-          paystackSplitRatio: splitRatio || 10,
-          autoPayout: autoPayout || false,
-          payoutSchedule: payoutSchedule || 'weekly',
-          bankVerified: true,
-        },
-      })
+      if (subaccountResult?.success) {
+        profile = await prisma.eventOwnerProfile.create({
+          data: {
+            userId: currentUser.id,
+            paystackSubaccountId: subaccountResult.subaccountCode,
+            paystackBusinessName: businessName,
+            paystackSettledBank: bankCode,
+            paystackAccountNumber: accountNumber,
+            paystackSplitRatio: splitRatio || 10,
+            autoPayout: autoPayout || false,
+            payoutSchedule: payoutSchedule || 'weekly',
+            bankVerified: true,
+          },
+        })
+      } else {
+        // Create profile without subaccount — user needs admin approval for payouts
+        profile = await prisma.eventOwnerProfile.create({
+          data: {
+            userId: currentUser.id,
+            paystackBusinessName: businessName,
+            paystackSettledBank: bankCode,
+            paystackAccountNumber: accountNumber,
+            paystackSplitRatio: splitRatio || 10,
+            autoPayout: autoPayout || false,
+            payoutSchedule: payoutSchedule || 'weekly',
+            bankVerified: false,
+          },
+        })
+      }
     }
 
-    return NextResponse.json({ profile, success: true })
+    return NextResponse.json({
+      profile,
+      success: true,
+      bankVerified,
+      ...(verificationError ? { verificationError } : {}),
+    })
   } catch (error) {
     console.error('Create profile error:', error)
     return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 })
