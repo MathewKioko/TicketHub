@@ -178,6 +178,96 @@
   .dark .hover\:text-flame:hover {
     color: var(--accent-flame);
   }
+  
+  /* Common text colors that disappear on dark backgrounds */
+  .dark .text-white {
+    color: var(--text-ink);
+  }
+  .dark .text-black {
+    color: var(--text-ink);
+  }
+  .dark .text-gray-100 {
+    color: var(--text-slate-faint);
+  }
+  .dark .text-gray-200 {
+    color: var(--text-slate-faint);
+  }
+  .dark .text-gray-300 {
+    color: var(--text-slate-faint);
+  }
+  .dark .text-gray-400 {
+    color: var(--text-slate-faint);
+  }
+  .dark .text-gray-500 {
+    color: var(--text-slate-faint);
+  }
+  .dark .text-gray-600 {
+    color: var(--text-slate);
+  }
+  .dark .text-gray-700 {
+    color: var(--text-slate);
+  }
+  .dark .text-gray-800 {
+    color: var(--text-slate);
+  }
+  .dark .text-gray-900 {
+    color: var(--text-ink);
+  }
+  
+  /* Common background colors that are too bright on dark mode */
+  .dark .bg-white {
+    background-color: var(--bg-paper);
+  }
+  .dark .bg-black {
+    background-color: var(--bg);
+  }
+  .dark .bg-gray-50 {
+    background-color: var(--bg-shell);
+  }
+  .dark .bg-gray-100 {
+    background-color: var(--bg-shell);
+  }
+  .dark .bg-gray-200 {
+    background-color: var(--bg-shell);
+  }
+  .dark .bg-gray-300 {
+    background-color: var(--bg-shell);
+  }
+  
+  /* Common border colors that disappear on dark */
+  .dark .border-gray-100 {
+    border-color: var(--bg-border);
+  }
+  .dark .border-gray-200 {
+    border-color: var(--bg-border);
+  }
+  .dark .border-gray-300 {
+    border-color: var(--bg-border);
+  }
+  .dark .border-gray-400 {
+    border-color: var(--bg-border);
+  }
+  .dark .border-white {
+    border-color: var(--bg-border);
+  }
+  
+  /* Placeholder text in dark mode */
+  .dark .placeholder-gray-400::placeholder,
+  .dark .placeholder-gray-500::placeholder,
+  .dark .placeholder-gray-600::placeholder {
+    color: var(--text-slate-faint);
+  }
+  
+  /* Focus rings in dark mode */
+  .dark .focus\:ring-ink:focus-visible {
+    box-shadow: 0 0 0 2px var(--text-ink);
+  }
+  
+  /* Selection color in dark mode */
+  .dark ::selection {
+    background: var(--accent-flame);
+    color: var(--text-ink);
+  }
 }
 
 @media print {
