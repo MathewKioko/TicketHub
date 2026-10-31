@@ -48,9 +48,9 @@ export async function GET(
       return NextResponse.json({ error: 'Ticket not found' }, { status: 404 })
     }
 
-    // If user is logged in, verify they own the ticket or are the organizer
+    // If user is logged in, verify they own the ticket or are staff
     if (user) {
-      if (user.id !== ticket.userId && user.role !== 'ORGANIZER') {
+      if (user.id !== ticket.userId && user.role !== 'ORGANIZER' && user.role !== 'ADMIN') {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
     }
