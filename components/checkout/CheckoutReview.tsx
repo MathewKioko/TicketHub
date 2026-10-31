@@ -158,7 +158,7 @@ export function CheckoutReview() {
     )
   }
 
-    return (
+  return (
     <div className="mx-auto max-w-[1180px] px-4 py-6 sm:px-8 lg:py-14">
       <div className="max-w-[52ch]">
         <h1 className="display text-[34px] leading-[1.02] sm:text-[46px]">Review your tickets</h1>
@@ -252,23 +252,22 @@ export function CheckoutReview() {
                 <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em]">Payment</h2>
               </div>
               <div className="mt-4 border border-line bg-[#FBF7F0] p-4 text-[13px] leading-relaxed text-slate">
-    {method === 'mpesa' ? (
-      <>
-        <span className="font-medium text-ink">You'll pay via M-Pesa.</span>
-        <p className="mt-1 text-xs text-slate">
-          Enter your phone number to receive an STK Push on your phone. Approve the payment to confirm your tickets. Nothing is charged before you continue.
-        </p>
-      </>
-    ) : (
-      <>
-        <span className="font-medium text-ink">You'll pay on Paystack.</span>
-        <p className="mt-1 text-xs text-slate">
-          Choose card or M-Pesa there. Paystack confirms the payment, then we issue your tickets. Nothing is charged before you continue.
-        </p>
-      </>
-    )}
-</div>
-
+                {method === 'mpesa' ? (
+                  <>
+                    <span className="font-medium text-ink">You'll pay via M-Pesa.</span>
+                    <p className="mt-1 text-xs text-slate">
+                      Enter your phone number to receive an STK Push on your phone. Approve the payment to confirm your tickets. Nothing is charged before you continue.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-medium text-ink">You'll pay on Paystack.</span>
+                    <p className="mt-1 text-xs text-slate">
+                      Choose card or M-Pesa there. Paystack confirms the payment, then we issue your tickets. Nothing is charged before you continue.
+                    </p>
+                  </>
+                )}
+              </div>
             </section>
 
             {!user?.verified ? (
@@ -337,11 +336,12 @@ export function CheckoutReview() {
                 </p>
 
                 <div className="border-t border-line bg-[#F5F0E7] px-5 py-4">
-                <ul className="space-y-2 text-xs text-slate">
-                  <li>Secured by Paystack and M-Pesa — PCI-DSS compliant</li>
-                  <li>QR ticket issued to your wallet after payment</li>
-                  <li>Entry handled by the organiser</li>
-                </ul>
+                  <ul className="space-y-2 text-xs text-slate">
+                    <li>Secured by Paystack and M-Pesa — PCI-DSS compliant</li>
+                    <li>QR ticket issued to your wallet after payment</li>
+                    <li>Entry handled by the organiser</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </aside>
