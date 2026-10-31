@@ -211,7 +211,7 @@ export default function AdminUsersPage() {
             />
           </div>
         ) : (
-          <div className="mt-6">
+          <div className="mt-6 mobile-table">
             <Table>
               <THead>
                 <Th>User</Th>
@@ -248,21 +248,23 @@ export default function AdminUsersPage() {
                       </Td>
                       <Td align="right">
                         {user.organizerRequestStatus === 'suspended' ? (
-                          <div className="flex justify-end gap-2">
+                          <div className="flex flex-wrap gap-2 justify-end">
                             <Button
                               size="sm"
                               onClick={() => void suspendUser(user.id, 'unsuspend')}
                               disabled={busyId === user.id}
+                              className="mobile-full md:w-auto"
                             >
                               Unsuspend
                             </Button>
                           </div>
                         ) : pending ? (
-                          <div className="flex justify-end gap-2">
+                          <div className="flex flex-wrap gap-2 justify-end">
                             <Button
                               size="sm"
                               onClick={() => void act(user.id, 'approve')}
                               disabled={busyId === user.id}
+                              className="mobile-full md:w-auto"
                             >
                               Approve
                             </Button>
@@ -271,6 +273,7 @@ export default function AdminUsersPage() {
                               variant="ghost"
                               onClick={() => void act(user.id, 'reject')}
                               disabled={busyId === user.id}
+                              className="mobile-full md:w-auto"
                             >
                               Reject
                             </Button>
@@ -279,37 +282,41 @@ export default function AdminUsersPage() {
                           <span className="text-xs text-slate">Managed separately</span>
                         ) : (
                           <>
-                            <label className="sr-only" htmlFor={`role-${user.id}`}>
-                              Change role for {user.name}
-                            </label>
-                            <select
-                              id={`role-${user.id}`}
-                              value={isOrganizer ? 'make_organizer' : 'make_attendee'}
-                              onChange={(event) => void act(user.id, event.target.value as AdminAction)}
-                              disabled={busyId === user.id}
-                              className="field ml-auto w-[168px] text-xs"
-                            >
-                              <option value="make_attendee">Attendee</option>
-                              <option value="make_organizer">Organizer</option>
-                            </select>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => void suspendUser(user.id, 'suspend')}
-                              disabled={busyId === user.id}
-                              className="text-flame hover:bg-flame-soft ml-2"
-                            >
-                              Suspend
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => void deleteUser(user.id)}
-                              disabled={busyId === user.id}
-                              className="text-danger hover:bg-danger-soft ml-2"
-                            >
-                              Delete
-                            </Button>
+                            <div className="flex flex-wrap gap-2 justify-end">
+                              <label className="sr-only" htmlFor={`role-${user.id}`}>
+                                Change role for {user.name}
+                              </label>
+                              <select
+                                id={`role-${user.id}`}
+                                value={isOrganizer ? 'make_organizer' : 'make_attendee'}
+                                onChange={(event) => void act(user.id, event.target.value as AdminAction)}
+                                disabled={busyId === user.id}
+                                className="field md:w-auto w-full text-xs"
+                              >
+                                <option value="make_attendee">Attendee</option>
+                                <option value="make_organizer">Organizer</option>
+                              </select>
+                            </div>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => void suspendUser(user.id, 'suspend')}
+                                disabled={busyId === user.id}
+                                className="mobile-full md:w-auto text-flame hover:bg-flame-soft"
+                              >
+                                Suspend
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => void deleteUser(user.id)}
+                                disabled={busyId === user.id}
+                                className="mobile-full md:w-auto text-danger hover:bg-danger-soft"
+                              >
+                                Delete
+                              </Button>
+                            </div>
                           </>
                         )}
                       </Td>

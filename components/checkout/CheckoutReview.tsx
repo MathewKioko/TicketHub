@@ -158,17 +158,17 @@ export function CheckoutReview() {
     )
   }
 
-  return (
-    <div className="mx-auto max-w-[1180px] px-5 py-10 sm:px-8 lg:py-14">
+    return (
+    <div className="mx-auto max-w-[1180px] px-4 py-6 sm:px-8 lg:py-14">
       <div className="max-w-[52ch]">
-        <h1 className="display text-[40px] leading-[1.02] sm:text-[46px]">Review your tickets</h1>
+        <h1 className="display text-[34px] leading-[1.02] sm:text-[46px]">Review your tickets</h1>
         <p className="mt-3 text-sm leading-relaxed text-slate">
           Check the details below. Nothing is charged until you continue to Paystack.
         </p>
       </div>
 
       {loading ? (
-        <div className="mt-10 space-y-4">
+        <div className="mt-8 space-y-4">
           <Skeleton className="h-6 w-40" />
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-24 w-full" />
@@ -185,7 +185,7 @@ export function CheckoutReview() {
           </Notice>
         </div>
       ) : (
-        <div className="mt-10 grid grid-cols-1 gap-12 lg:grid-cols-[1fr_392px] lg:gap-16">
+        <div className="mt-8 gap-8 lg:grid-cols-[1fr_392px] lg:gap-16 grid-cols-1">
           <div className="min-w-0">
             <section>
               <div className="flex items-baseline justify-between border-b border-ink pb-2.5">
@@ -196,17 +196,17 @@ export function CheckoutReview() {
               </div>
 
               <div className="flex gap-5 py-5">
-                <div className="h-[104px] w-[132px] shrink-0 overflow-hidden bg-shell">
+                <div className="h-[88px] w-[104px] shrink-0 overflow-hidden bg-shadow rounded-[8px]">
                   {event.imageUrl ? (
                     <img src={event.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
                   ) : null}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[12px] font-medium uppercase tracking-[0.12em] text-slate">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-slate">
                     {formatEventStamp(event.date)}
                   </p>
-                  <h3 className="display mt-1.5 text-[26px] leading-tight">{event.title}</h3>
-                  <p className="mt-1.5 text-[13px] text-slate">{event.venue}</p>
+                  <h3 className="mt-1.5 text-[20px] leading-tight">{event.title}</h3>
+                  <p className="mt-1 text-[12px] text-slate">{event.venue}</p>
                 </div>
               </div>
 
@@ -252,21 +252,21 @@ export function CheckoutReview() {
                 <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em]">Payment</h2>
               </div>
               <div className="mt-4 border border-line bg-[#FBF7F0] p-4 text-[13px] leading-relaxed text-slate">
-  {method === 'mpesa' ? (
-    <>
-      <span className="font-medium text-ink">You'll pay via M-Pesa.</span>
-      <p className="mt-1 text-xs text-slate">
-        Enter your phone number to receive an STK Push on your phone. Approve the payment to confirm your tickets. Nothing is charged before you continue.
-      </p>
-    </>
-  ) : (
-    <>
-      <span className="font-medium text-ink">You'll pay on Paystack.</span>
-      <p className="mt-1 text-xs text-slate">
-        Choose card or M-Pesa there. Paystack confirms the payment, then we issue your tickets. Nothing is charged before you continue.
-      </p>
-    </>
-  )}
+    {method === 'mpesa' ? (
+      <>
+        <span className="font-medium text-ink">You'll pay via M-Pesa.</span>
+        <p className="mt-1 text-xs text-slate">
+          Enter your phone number to receive an STK Push on your phone. Approve the payment to confirm your tickets. Nothing is charged before you continue.
+        </p>
+      </>
+    ) : (
+      <>
+        <span className="font-medium text-ink">You'll pay on Paystack.</span>
+        <p className="mt-1 text-xs text-slate">
+          Choose card or M-Pesa there. Paystack confirms the payment, then we issue your tickets. Nothing is charged before you continue.
+        </p>
+      </>
+    )}
 </div>
 
             </section>
@@ -295,8 +295,8 @@ export function CheckoutReview() {
             </div>
           </div>
 
-          <aside className="self-start lg:sticky lg:top-8">
-            <div className="border border-ink border-t-2 border-t-flame bg-paper">
+          <aside className="self-start lg:sticky lg:top-8 mt-6 lg:mt-0">
+            <div className="border border-ink border-t-2 border-t-flame bg-paper rounded-sm overflow-hidden">
               <div className="border-b border-line px-5 py-4">
                 <h2 className="display text-[22px] leading-none">Order summary</h2>
               </div>
@@ -344,8 +344,6 @@ export function CheckoutReview() {
                 </ul>
               </div>
             </div>
-
-          </div>
           </aside>
         </div>
       )}

@@ -275,6 +275,60 @@
   }
 }
 
+@media (max-width: 640px) {
+  /* Mobile: prevent horizontal overflow */
+  html, body {
+    overflow-x: hidden;
+  }
+
+  /* Mobile: tables scroll horizontally */
+  .mobile-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Mobile: full-width buttons */
+  .mobile-full {
+    width: 100%;
+  }
+
+  /* Mobile: stack form fields */
+  .mobile-stack > * {
+    width: 100%;
+  }
+
+  /* Mobile: tighter padding */
+  .mobile-px-3 {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  .mobile-pt-3 {
+    padding-top: 0.75rem;
+  }
+  .mobile-pb-3 {
+    padding-bottom: 0.75rem;
+  }
+
+  /* Mobile: smaller text */
+  .mobile-text-sm {
+    font-size: 0.875rem;
+  }
+  .mobile-text-xs {
+    font-size: 0.75rem;
+  }
+
+  /* Mobile: cards */
+  .mobile-card {
+    border-radius: var(--border-radius);
+    padding: 1rem;
+  }
+
+  /* Mobile: hide desktop-only elements */
+  .mobile-hidden {
+    display: none !important;
+  }
+}
+
 @media print {
   .print-hide {
     display: none !important;

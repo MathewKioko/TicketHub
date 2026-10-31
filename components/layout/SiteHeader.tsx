@@ -30,17 +30,17 @@ export function SiteHeader() {
   return (
     <>
       <header className="border-b border-line bg-bone print-hide">
-        <div className="mx-auto flex h-[66px] max-w-[1400px] items-center justify-between px-5 sm:px-8">
-          <div className="flex items-center gap-10">
-            <Link href="/" aria-label="TicketHub home" className="flex items-center gap-3">
+        <div className="mx-auto flex h-[56px] max-w-[1400px] items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3">
+            <Link href="/" aria-label="TicketHub home" className="flex items-center gap-2">
               <Image
                 src="/LOGO.png"
                 alt="TicketHub"
-                width={64}
-                height={64}
-                className="h-[64px] w-[64px] object-contain"
+                width={40}
+                height={40}
+                className="h-[40px] w-[40px] object-contain"
               />
-              <span className="text-[22px] font-bold tracking-[0.17em]">TICKETHUB</span>
+              <span className="text-[16px] font-bold tracking-[0.17em]">TICKETHUB</span>
             </Link>
 
             <nav aria-label="Primary" className="hidden items-center gap-7 text-[13px] md:flex">
