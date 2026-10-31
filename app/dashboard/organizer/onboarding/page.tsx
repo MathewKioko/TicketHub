@@ -26,8 +26,10 @@ export default function OrganizerOnboardingPage() {
   const router = useRouter()
   const [banks, setBanks] = useState<Array<{ name: string; code: string }>>([])
   const [submitting, setSubmitting] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
+  const [bankStatement, setBankStatement] = useState<File | null>(null)
 
   useEffect(() => {
     void fetch('/api/paystack/banks', { cache: 'no-store' })
@@ -72,6 +74,20 @@ export default function OrganizerOnboardingPage() {
 
       if (!response.ok) throw new Error(result.error ?? 'Failed to create subaccount')
 
+      // Upload bank statement if provided
+      if (bankStatement) {
+        const formData = new FormData()
+        formData.append('file', bankStatement)
+        const uploadResponse = await fetch('/api/organizer/bank-statement/upload', {
+          method: 'POST',
+          body: formData,
+        })
+        if (!uploadResponse.ok) {
+          const uploadResult = await uploadResponse.json()
+          throw new Error(uploadResult.error ?? 'Bank statement upload failed')
+        }
+      }
+
       setDone(true)
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Failed to create subaccount')
@@ -80,19 +96,36 @@ export default function OrganizerOnboardingPage() {
     }
   }
 
+  async function handleBankStatementChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (file) {
+      const allowedTypes = ['application/pdf', 'image/png', 'image/jpg', 'image/jpeg']
+      if (!allowedTypes.includes(file.type)) {
+        setError('Only PDF, PNG, or JPG files are allowed')
+        return
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        setError('File size must be under 10MB')
+        return
+      }
+      setBankStatement(file)
+      setError(null)
+    }
+  }
+
   if (done) {
     return (
       <>
         <FocusedHeader rightLabel="Organizer workspace" rightHref="/dashboard/organizer" />
         <div className="mx-auto max-w-[440px] px-5 py-10 sm:px-8 lg:py-14">
-          <h1 className="display text-[40px] leading-tight">Almost ready</h1>
-          <p className="mt-3 text-sm leading-relaxed text-slate">
-            Your Paystack subaccount has been created. An administrator will review your bank
-            details before payouts are enabled.
-          </p>
-          <Notice tone="success" className="mt-6" title="Subaccount created">
-            Your revenue split and bank details are on file.
-          </Notice>
+        <h1 className="display text-[40px] leading-tight">Almost ready</h1>
+        <p className="mt-3 text-sm leading-relaxed text-slate">
+          Your payout account has been created. An administrator will review your bank details and
+          {bankStatement ? 'document' : 'documents'} before payouts are enabled.
+        </p>
+        <Notice tone="success" className="mt-6" title="Subaccount created">
+          Your revenue split and bank details are on file. {bankStatement ? 'Your document has been uploaded for verification.' : 'Upload your ID or bank statement in settings to enable payouts.'}
+        </Notice>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button
               onClick={() => void router.push('/dashboard/organizer')}
@@ -207,9 +240,28 @@ export default function OrganizerOnboardingPage() {
             account.
           </p>
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Creating subaccount…' : 'Create payout account'}
+          <Button type="submit" className="w-full" disabled={isSubmitting || uploading}>
+            {isSubmitting || uploading ? 'Creating account…' : 'Create payout account'}
           </Button>
+
+          {bankStatement && (
+            <p className="mt-3 text-xs text-slate">
+              Selected: {bankStatement.name} ({Math.round(bankStatement.size / 1024)} KB)
+            </p>
+          )}
+          <label className="block text-[12px] font-semibold text-slate mb-2">
+            Bank statement (ID or statement copy)
+          </label>
+          <input
+            type="file"
+            accept=".pdf,.png,.jpg,.jpeg"
+            onChange={handleBankStatementChange}
+            className="block w-full text-sm text-slate file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-ink file:text-bone hover:file:bg-ink-soft"
+          />
+          <p className="text-xs text-slate mt-1">
+            Upload a copy of your ID or bank statement for verification. An administrator will review
+            it before payouts are enabled.
+          </p>
         </form>
 
         <p className="mt-6 text-[13px] text-slate">
