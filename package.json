@@ -36,6 +36,7 @@
     "react-hook-form": "^7.53.0",
     "react-hot-toast": "^2.4.1",
     "react-window": "^2.2.3",
+    "resend": "^6.37.0",
     "safaricom": "^0.0.0",
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5",

@@ -93,6 +93,10 @@ model User {
   loginAttempts     Int       @default(0)
   lockUntil         DateTime?
 
+  // Password reset fields
+  resetToken        String?
+  resetExpires      DateTime?
+
   // Feature flags (v2)
   features Json?    @default("{}")
 

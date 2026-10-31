@@ -151,6 +151,16 @@ function LoginForm() {
               </Link>
             </p>
 
+            <p className="mt-2 text-[13px] text-slate">
+              Forgot your password?{' '}
+              <Link
+                href={next ? `/auth/forgot-password?next=${encodeURIComponent(next)}` : '/auth/forgot-password'}
+                className="link-quiet text-ink"
+              >
+                Reset it
+              </Link>
+            </p>
+
             <div className="mt-10 border-t border-line pt-5">
               <p className="text-[13px] text-slate">
                 Running events?{' '}
