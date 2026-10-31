@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export type Role =
   | 'ATTENDEE'
@@ -61,6 +62,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void refresh()
   }, [refresh])
 
+  const router = useRouter()
+
   const logout = useCallback(async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' })
@@ -72,7 +75,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       window.localStorage.removeItem('Ticket Hub_userId')
     }
     setUser(null)
-  }, [])
+    void router.replace('/')
+  }, [router])
 
   const value = useMemo<AuthContextValue>(
     () => ({ user, loading, refresh, logout }),
