@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/db'
-import { hashPassword } from '@/lib/auth'
+import { hashPassword, generateVerificationCode } from '@/lib/auth'
 import crypto from 'crypto'
+import { sendVerificationEmail } from '@/lib/emails'
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -31,8 +32,8 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await hashPassword(password)
 
-    // Generate verification token
-    const verificationToken = crypto.randomBytes(32).toString('hex')
+    // Generate 6-digit verification OTP code
+    const verificationCode = generateVerificationCode()
     const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
 
     // Create user
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
         password: hashedPassword,
         name,
         phone,
-        verificationToken,
+        verificationToken: verificationCode,
         verificationExpires,
         verified: false,
       },
@@ -56,14 +57,16 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // TODO: Send verification email
-    // For now, just return success with token for testing
-    console.log(`Verification token for ${email}: ${verificationToken}`)
+    // Send verification email with OTP code
+    await sendVerificationEmail(user.email, {
+      name: user.name,
+      code: verificationCode,
+      email: user.email,
+    })
 
     return NextResponse.json({
       user,
-      message: 'Registration successful. Please check your email for verification.',
-      verificationToken, // Remove this in production
+      message: 'Registration successful. Please check your email for the verification code.',
     })
   } catch (error) {
     if (error instanceof z.ZodError) {

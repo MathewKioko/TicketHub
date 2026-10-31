@@ -22,6 +22,11 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash)
 }
 
+export function generateVerificationCode(): string {
+  // 6-digit numeric OTP code
+  return crypto.randomInt(100000, 999999).toString().padStart(6, '0')
+}
+
 export async function createSession(userId: string, ipAddress?: string, userAgent?: string) {
   const token = crypto.randomBytes(32).toString('hex')
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days

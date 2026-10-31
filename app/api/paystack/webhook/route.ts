@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { verifyPayment, isValidTicketReference, getInternalWebhookSecret } from '@/lib/paystack'
+import { sendTicketConfirmationEmail } from '@/lib/emails'
 
 // Store processed events for idempotency (in-memory for quick lookups)
 // In production, consider using Redis for distributed idempotency
@@ -124,6 +125,46 @@ export async function POST(request: NextRequest) {
         console.log('No pending tickets found for reference:', reference)
         return NextResponse.json({ received: true, updated: 0 })
       }
+
+      // Fetch tickets with user info for confirmation emails
+      const confirmedTickets = await prisma.ticket.findMany({
+        where: { paystackReference: reference },
+        include: {
+          user: {
+            select: {
+              email: true,
+              name: true,
+            },
+          },
+          event: {
+            select: {
+              title: true,
+              date: true,
+              venue: true,
+            },
+          },
+        },
+      })
+
+      // Send ticket confirmation emails
+      await Promise.all(
+        confirmedTickets.map(async (t) => {
+          if (t.user.email && t.qrCodeData) {
+            await sendTicketConfirmationEmail(t.user.email, {
+              ticketId: t.id,
+              eventTitle: t.event.title,
+              eventDate: t.event.date.toISOString().split('T')[0],
+              eventTime: t.event.date.toISOString().split('T')[1].split('.')[0] ?? '',
+              venue: t.event.venue,
+              ticketType: t.ticketType,
+              quantity: t.quantity,
+              amount: t.price * t.quantity,
+              qrCodeData: t.qrCodeData,
+              qrCodeImage: t.qrCodeImage,
+            })
+          }
+        })
+      )
 
       console.log('Webhook processed successfully:', {
         reference,

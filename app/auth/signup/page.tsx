@@ -17,7 +17,6 @@ function SignupForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  const [token, setToken] = useState<string | null>(null)
   const [done, setDone] = useState(false)
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -39,10 +38,8 @@ function SignupForm() {
       })
       const data = (await response.json()) as {
         error?: string
-        verificationToken?: string
       }
       if (!response.ok) throw new Error(data.error ?? 'The account could not be created.')
-      setToken(data.verificationToken ?? null)
       setDone(true)
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'The account could not be created.')
@@ -51,7 +48,7 @@ function SignupForm() {
     }
   }
 
-  if (done) {
+    if (done) {
     const verifyHref = next
       ? `/auth/verify?next=${encodeURIComponent(next)}`
       : '/auth/verify'
@@ -65,21 +62,8 @@ function SignupForm() {
         </p>
 
         <Notice tone="success" className="mt-6" title="Account created">
-          Sign in once the email is verified.
+          A 6-digit verification code has been sent to your email. Enter it on the verification page.
         </Notice>
-
-        {token ? (
-          <div className="mt-5 border border-line bg-paper px-4 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.13em] text-slate">
-              Verification code
-            </p>
-            <p className="tnum mt-1.5 break-all text-sm">{token}</p>
-            <p className="mt-2 text-xs leading-relaxed text-slate">
-              Email delivery is not configured on this deployment, so the code is shown here. Enter it
-              on the verification page.
-            </p>
-          </div>
-        ) : null}
 
         <div className="mt-6 flex flex-wrap gap-3">
           <Link href={verifyHref} className="bg-ink px-5 py-3 text-[13px] font-medium text-bone hover:bg-ink-soft">

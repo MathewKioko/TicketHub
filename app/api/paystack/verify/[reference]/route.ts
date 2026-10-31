@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { verifyPayment, isValidTicketReference } from '@/lib/paystack'
+import { sendTicketConfirmationEmail } from '@/lib/emails'
 
 // Maximum retries for payment verification
 const MAX_RETRIES = 3
@@ -43,6 +44,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             date: true,
             venue: true,
             basePrice: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
           },
         },
       },
@@ -124,7 +132,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       },
     })
 
-    // Get updated tickets
+    // Get updated tickets with user info
     const updatedTickets = await prisma.ticket.findMany({
       where: {
         paystackReference: reference,
@@ -139,8 +147,35 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             basePrice: true,
           },
         },
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+          },
+        },
       },
     })
+
+    // Send ticket confirmation emails
+    await Promise.all(
+      updatedTickets.map(async (t) => {
+        if (t.user.email && t.qrCodeData) {
+          await sendTicketConfirmationEmail(t.user.email, {
+            ticketId: t.id,
+            eventTitle: t.event.title,
+            eventDate: t.event.date.toISOString().split('T')[0],
+            eventTime: t.event.date.toISOString().split('T')[1].split('.')[0] ?? '',
+            venue: t.event.venue,
+            ticketType: t.ticketType,
+            quantity: t.quantity,
+            amount: t.price * t.quantity,
+            qrCodeData: t.qrCodeData,
+            qrCodeImage: t.qrCodeImage,
+          })
+        }
+      })
+    )
 
     // Emit real-time update
     try {

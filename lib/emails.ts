@@ -64,10 +64,13 @@ type EmailData = {
     ticketId: string
     eventTitle: string
     eventDate: string
+    eventTime: string
     venue: string
     ticketType: string
     quantity: number
     amount: number
+    qrCodeData: string
+    qrCodeImage?: string | null
   }
   paymentReceipt?: {
     paymentId: string
@@ -101,7 +104,8 @@ type EmailData = {
   }
   verification?: {
     name: string
-    verificationUrl: string
+    code: string
+    email: string
   }
 }
 
@@ -168,18 +172,23 @@ function buildTemplateContent(template: EmailTemplate, data: EmailData): string 
   switch (template) {
     case 'ticket_confirmation': {
       const t = data.ticketConfirmation
+      const qrHtml = t?.qrCodeImage
+        ? `<img src="${t.qrCodeImage}" alt="Entry QR code" style="width: 160px; height: 160px; border: 2px solid #0077be; border-radius: 8px; display: block; margin: 20px auto;" />`
+        : `<div style="width: 160px; height: 160px; border: 2px dashed #0077be; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 20px auto; font-family: monospace; font-size: 11px; color: #0077be;">${t?.qrCodeData}</div>`
       return `
         <h2 style="color: #0077be;">🎫 Your Ticket Confirmation</h2>
-        <p>Thank you for your purchase! Here are your ticket details:</p>
+        <p>Thank you for your purchase! Your ticket is confirmed and ready for entry.</p>
         <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
           <tr><td style="padding: 8px; border-bottom: 1px solid #e5e5e5;"><strong>Event:</strong></td><td style="padding: 8px; border-bottom: 1px solid #e5e5e5;">${t?.eventTitle}</td></tr>
           <tr><td style="padding: 8px; border-bottom: 1px solid #e5e5e5;"><strong>Date:</strong></td><td style="padding: 8px; border-bottom: 1px solid #e5e5e5;">${t?.eventDate}</td></tr>
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e5e5;"><strong>Time:</strong></td><td style="padding: 8px; border-bottom: 1px solid #e5e5e5;">${t?.eventTime}</td></tr>
           <tr><td style="padding: 8px; border-bottom: 1px solid #e5e5e5;"><strong>Venue:</strong></td><td style="padding: 8px; border-bottom: 1px solid #e5e5e5;">${t?.venue}</td></tr>
           <tr><td style="padding: 8px; border-bottom: 1px solid #e5e5e5;"><strong>Ticket Type:</strong></td><td style="padding: 8px; border-bottom: 1px solid #e5e5e5;">${t?.ticketType}</td></tr>
-          <tr><td style="padding: 8px;"><strong>Quantity:</strong></td><td style="padding: 8px;">${t?.quantity}</td></tr>
-          <tr><td style="padding: 8px;"><strong>Amount:</strong></td><td style="padding: 8px;">KES ${t?.amount}</td></tr>
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e5e5;"><strong>Quantity:</strong></td><td style="padding: 8px;">${t?.quantity}</td></tr>
+          <tr><td style="padding: 8px;"><strong>Amount Paid:</strong></td><td style="padding: 8px;">KES ${t?.amount}</td></tr>
         </table>
-        <p>Your tickets are saved to your wallet. Show your QR code at the gate for entry.</p>
+        ${qrHtml}
+        <p style="font-size: 12px; color: #666;">Show this QR code at the gate for entry. Staff will scan it once.</p>
       `
     }
     case 'payment_receipt': {
@@ -246,13 +255,16 @@ function buildTemplateContent(template: EmailTemplate, data: EmailData): string 
     case 'account_verification': {
       const v = data.verification
       return `
-        <h2 style="color: #0077be;">✓ Verify Your Account</h2>
+        <h2 style="color: #0077be;">✓ Verify Your Email</h2>
         <p>Hello ${v?.name},</p>
-        <p>Please verify your email address by clicking the button below:</p>
-        <div style="text-align: center; margin: 24px 0;">
-          <a href="${v?.verificationUrl}" style="background: #0077be; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">Verify Email</a>
+        <p>Thank you for creating a TicketHub account. Your verification code is:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <div style="background: #0077be; color: #ffffff; font-size: 32px; font-weight: bold; letter-spacing: 8px; padding: 20px; border-radius: 8px; display: inline-block; font-family: monospace;">
+            ${v?.code}
+          </div>
         </div>
-        <p>This link will expire in 24 hours.</p>
+        <p>Enter this code on the verification page to confirm your email address.</p>
+        <p>This code will expire in 24 hours. If you didn't create this account, you can safely ignore this email.</p>
       `
     }
     case 'password_reset':
